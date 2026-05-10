@@ -39,7 +39,7 @@ search?: SearchFilterParameter;
 offset?: OffsetParameter;
 /**
  * @minimum 1
- * @maximum 100
+ * @maximum 50
  */
 limit?: LimitParameter;
 };
