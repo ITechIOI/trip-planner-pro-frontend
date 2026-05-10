@@ -17,8 +17,16 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+.agents/
+.codex/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+requirements.md
+AGENTS.md
+docs/api/swagger.yaml
+
+.env
