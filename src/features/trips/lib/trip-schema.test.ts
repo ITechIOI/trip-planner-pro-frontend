@@ -17,6 +17,6 @@ describe('trip schema', () => {
 
   it('normalizes blank date inputs to null for API requests', () => {
     expect(normalizeTripDate('')).toBeNull()
-    expect(normalizeTripDate('2026-06-10')).toBe('2026-06-10')
+    expect(normalizeTripDate('2026-06-10')).toBe('2026-06-10T00:00:00')
   })
 })

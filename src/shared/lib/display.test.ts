@@ -9,7 +9,7 @@ import {
 
 describe('display helpers', () => {
   it('formats currency and clamps percent values for UI display', () => {
-    expect(formatCurrency(1_500_000)).toBe('1.500.000 ₫')
+    expect(formatCurrency(1_500_000)).toBe('$1,500,000')
     expect(formatPercent(120)).toBe('100%')
     expect(formatPercent(-10)).toBe('0%')
   })

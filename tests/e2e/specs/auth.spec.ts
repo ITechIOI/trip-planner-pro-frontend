@@ -29,7 +29,9 @@ test.describe('auth flow', () => {
     await page.getByLabel('Password').fill('wrong-password')
     await page.getByRole('button', { name: /sign in/i }).click()
 
-    await expect(page.getByRole('alert')).toContainText('Authentication failed')
+    await expect(page.getByRole('alert')).toContainText(
+      'Username or password is incorrect.',
+    )
     await expect(page.getByLabel('Username')).toHaveValue('wrong-user')
     await expect(page.getByLabel('Password')).toHaveValue('wrong-password')
   })
@@ -62,7 +64,8 @@ test.describe('auth flow', () => {
 
     await page.goto('/trips/1/dashboard')
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await page.getByRole('button', { name: /sign out/i }).click()
+    await page.getByRole('button', { name: 'Open account menu' }).click()
+    await page.getByRole('menuitem', { name: 'Sign out' }).click()
 
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()

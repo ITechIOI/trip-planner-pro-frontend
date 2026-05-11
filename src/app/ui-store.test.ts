@@ -16,4 +16,19 @@ describe('ui store', () => {
 
     expect(useUiStore.getState().isSidebarCollapsed).toBe(false)
   })
+
+  it('stores and resets last active trip id', () => {
+    useUiStore.getState().setLastActiveTripId(2)
+
+    expect(useUiStore.getState().lastActiveTripId).toBe(2)
+
+    useUiStore.getState().setLastActiveTripId(undefined)
+
+    expect(useUiStore.getState().lastActiveTripId).toBeUndefined()
+
+    useUiStore.getState().setLastActiveTripId(3)
+    resetUiStore()
+
+    expect(useUiStore.getState().lastActiveTripId).toBeUndefined()
+  })
 })

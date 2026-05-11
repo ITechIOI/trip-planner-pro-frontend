@@ -1,11 +1,18 @@
+import { Box, Link as MuiLink, Paper, Stack, Typography } from '@mui/material'
 import { Compass } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLoginAction, useRegisterAction } from '@/features/auth'
 import { AuthForm } from '@/features/auth/components/auth-form'
+import {
+  getLoginErrorMessage,
+  getRegisterErrorMessage,
+} from '@/features/auth/lib'
 import type {
   AuthFormValues,
   RegisterValues,
 } from '@/features/auth/lib/auth-schemas'
+import { tripPlannerColors } from '@/app/theme'
+import { showErrorToast } from '@/shared/components/toast-store'
 
 export const AuthPage = ({ mode }: { mode: 'login' | 'register' }) => {
   const navigate = useNavigate()
@@ -13,11 +20,13 @@ export const AuthPage = ({ mode }: { mode: 'login' | 'register' }) => {
   const loginMutation = useLoginAction({
     mutation: {
       onSuccess: () => navigate('/trips', { replace: true }),
+      onError: (error) => showErrorToast(getLoginErrorMessage(error)),
     },
   })
   const registerMutation = useRegisterAction({
     mutation: {
       onSuccess: () => navigate('/trips', { replace: true }),
+      onError: (error) => showErrorToast(getRegisterErrorMessage(error)),
     },
   })
   const mutation = isRegister ? registerMutation : loginMutation
@@ -43,38 +52,81 @@ export const AuthPage = ({ mode }: { mode: 'login' | 'register' }) => {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-panel" aria-labelledby="auth-title">
-        <div className="auth-panel__brand">
-          <span aria-hidden="true">
+    <Box
+      className="auth-page"
+      component="main"
+      sx={{
+        display: 'grid',
+        placeItems: 'center',
+        minHeight: '100svh',
+        width: 'min(1120px, calc(100% - 32px))',
+        mx: 'auto',
+        py: { xs: 2, sm: 4 },
+      }}
+    >
+      <Paper
+        aria-labelledby="auth-title"
+        className="auth-panel"
+        component="section"
+        variant="outlined"
+        sx={{
+          width: 'min(460px, 100%)',
+          display: 'grid',
+          gap: 3.5,
+          p: { xs: 2.75, sm: 4 },
+          borderColor: tripPlannerColors.border,
+          borderRadius: 2,
+          bgcolor: 'rgba(255, 255, 255, 0.92)',
+          boxShadow: '0 18px 45px rgba(15, 23, 42, 0.08)',
+        }}
+      >
+        <Stack className="auth-panel__brand" direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+          <Box
+            aria-hidden="true"
+            sx={{
+              display: 'grid',
+              placeItems: 'center',
+              width: 42,
+              height: 42,
+              borderRadius: 1.5,
+              color: '#FFFFFF',
+              background: `linear-gradient(135deg, ${tripPlannerColors.primary}, ${tripPlannerColors.secondary})`,
+            }}
+          >
             <Compass size={26} />
-          </span>
-          <strong>Trip Planner Pro</strong>
-        </div>
-        <div>
-          <h1 id="auth-title">
+          </Box>
+          <Typography component="strong" sx={{ fontWeight: 900 }}>
+            Trip Planner Pro
+          </Typography>
+        </Stack>
+
+        <Box>
+          <Typography component="h1" id="auth-title" variant="h1">
             {isRegister ? 'Create your travel workspace' : 'Welcome back'}
-          </h1>
-          <p>
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
             Plan the itinerary, packing list, and travel budget from one calm
             workspace.
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         <AuthForm
           mode={mode}
           isPending={mutation.isPending}
-          hasSubmitError={Boolean(mutation.error)}
           onSubmit={onSubmit}
         />
 
-        <p className="auth-panel__switch">
+        <Typography className="auth-panel__switch" sx={{ textAlign: 'center' }}>
           {isRegister ? 'Already have an account?' : 'Need an account?'}{' '}
-          <Link to={isRegister ? '/login' : '/register'}>
+          <MuiLink
+            component={Link}
+            sx={{ color: tripPlannerColors.primaryStrong, fontWeight: 800 }}
+            to={isRegister ? '/login' : '/register'}
+          >
             {isRegister ? 'Sign in' : 'Create one'}
-          </Link>
-        </p>
-      </section>
-    </main>
+          </MuiLink>
+        </Typography>
+      </Paper>
+    </Box>
   )
 }

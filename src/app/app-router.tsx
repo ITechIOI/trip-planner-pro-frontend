@@ -7,6 +7,8 @@ import { TripDashboardPage } from '@/features/trips/pages/trip-dashboard-page'
 import { BudgetPage } from '@/features/budgets/pages/budget-page'
 import { ItineraryPage } from '@/features/itineraries/pages/itinerary-page'
 import { PackingPage } from '@/features/packing-checklists/pages/packing-page'
+import { TripMembersPage } from '@/features/trip-members/pages/trip-members-page'
+import { ProfilePage } from '@/features/users/pages/profile-page'
 import { AppShell } from './app-shell'
 
 const RequireAuth = ({ children }: { children: ReactElement }) => {
@@ -17,30 +19,27 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate replace to="/trips" />} />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/register" element={<AuthPage mode="register" />} />
         <Route
-          path="/trips"
-          element={
-            <RequireAuth>
-              <TripsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/trips/:tripId"
+          path="/"
           element={
             <RequireAuth>
               <AppShell />
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate replace to="dashboard" />} />
-          <Route path="dashboard" element={<TripDashboardPage />} />
-          <Route path="itinerary" element={<ItineraryPage />} />
-          <Route path="packing" element={<PackingPage />} />
-          <Route path="budget" element={<BudgetPage />} />
+          <Route index element={<Navigate replace to="/trips" />} />
+          <Route path="trips" element={<TripsPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="trips/:tripId">
+            <Route index element={<Navigate replace to="dashboard" />} />
+            <Route path="dashboard" element={<TripDashboardPage />} />
+            <Route path="itinerary" element={<ItineraryPage />} />
+            <Route path="packing" element={<PackingPage />} />
+            <Route path="budget" element={<BudgetPage />} />
+            <Route path="members" element={<TripMembersPage />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate replace to="/trips" />} />
       </Routes>

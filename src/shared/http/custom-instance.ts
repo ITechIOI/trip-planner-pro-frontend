@@ -36,6 +36,46 @@ const getRequestPath = (url?: string) => {
 const isPublicAuthRequest = (url?: string) =>
   PUBLIC_AUTH_PATHS.has(getRequestPath(url));
 
+const isFormDataRequest = (data: unknown) =>
+  typeof FormData !== "undefined" && data instanceof FormData;
+
+const withoutGeneratedMultipartContentType = (
+  headers: AxiosRequestConfig["headers"],
+): AxiosRequestConfig["headers"] => {
+  if (!headers) {
+    return headers;
+  }
+
+  if (
+    typeof headers === "object" &&
+    "delete" in headers &&
+    typeof headers.delete === "function"
+  ) {
+    headers.delete("Content-Type");
+    headers.delete("content-type");
+    return headers;
+  }
+
+  const nextHeaders = { ...(headers as Record<string, string>) };
+  delete nextHeaders["Content-Type"];
+  delete nextHeaders["content-type"];
+
+  return nextHeaders as AxiosRequestConfig["headers"];
+};
+
+const normalizeMultipartRequest = (
+  config: AxiosRequestConfig,
+): AxiosRequestConfig => {
+  if (!isFormDataRequest(config.data)) {
+    return config;
+  }
+
+  return {
+    ...config,
+    headers: withoutGeneratedMultipartContentType(config.headers),
+  };
+};
+
 AXIOS_INSTANCE.interceptors.request.use((config) => {
   const accessToken = getAccessToken();
 
@@ -55,7 +95,9 @@ AXIOS_INSTANCE.interceptors.request.use((config) => {
 export const customInstance = async <T>(
   config: AxiosRequestConfig,
 ): Promise<T> => {
-  const { data } = await AXIOS_INSTANCE.request<T>(config);
+  const { data } = await AXIOS_INSTANCE.request<T>(
+    normalizeMultipartRequest(config),
+  );
   return data;
 };
 

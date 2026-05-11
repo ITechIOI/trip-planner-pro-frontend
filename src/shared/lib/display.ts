@@ -3,9 +3,9 @@ import type { ItineraryResponse } from '@/shared'
 type QueryParamValue = string | number | boolean | null | undefined
 
 export const formatCurrency = (value?: number | null) => {
-  return new Intl.NumberFormat('vi-VN', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'VND',
+    currency: 'USD',
     maximumFractionDigits: 0,
   })
     .format(value ?? 0)

@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+playwright-report
+test-results
 
 # Editor directories and files
 .vscode/*
@@ -28,5 +30,8 @@ dist-ssr
 requirements.md
 AGENTS.md
 docs/api/swagger.yaml
+DESIGN.md
+
+airbnb/
 
 .env

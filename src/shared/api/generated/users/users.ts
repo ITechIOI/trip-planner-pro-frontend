@@ -27,10 +27,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BadGatewayResponse,
   BadRequestResponse,
+  NotFoundResponse,
+  PayloadTooLargeResponse,
   UnauthorizedResponse,
   UpdatePasswordRequest,
   UpdateUserRequest,
+  UploadCurrentUserAvatarBody,
   UserResponse
 } from '../model';
 
@@ -223,6 +227,71 @@ export const useDeleteCurrentUser = <TError = ErrorType<UnauthorizedResponse>,
       return useMutation(getDeleteCurrentUserMutationOptions(options), queryClient);
     }
     /**
+ * @summary Upload current user avatar
+ */
+export const uploadCurrentUserAvatar = (
+    uploadCurrentUserAvatarBody: BodyType<UploadCurrentUserAvatarBody>,
+ signal?: AbortSignal
+) => {
+
+      const formData = new FormData();
+formData.append(`file`, uploadCurrentUserAvatarBody.file);
+
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/me/avatar`, method: 'PATCH',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
+    },
+      );
+    }
+
+
+
+export const getUploadCurrentUserAvatarMutationOptions = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | PayloadTooLargeResponse | BadGatewayResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCurrentUserAvatar>>, TError,{data: BodyType<UploadCurrentUserAvatarBody>}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof uploadCurrentUserAvatar>>, TError,{data: BodyType<UploadCurrentUserAvatarBody>}, TContext> => {
+
+const mutationKey = ['uploadCurrentUserAvatar'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadCurrentUserAvatar>>, {data: BodyType<UploadCurrentUserAvatarBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadCurrentUserAvatar(data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadCurrentUserAvatarMutationResult = NonNullable<Awaited<ReturnType<typeof uploadCurrentUserAvatar>>>
+    export type UploadCurrentUserAvatarMutationBody = BodyType<UploadCurrentUserAvatarBody>
+    export type UploadCurrentUserAvatarMutationError = ErrorType<BadRequestResponse | UnauthorizedResponse | PayloadTooLargeResponse | BadGatewayResponse>
+
+    /**
+ * @summary Upload current user avatar
+ */
+export const useUploadCurrentUserAvatar = <TError = ErrorType<BadRequestResponse | UnauthorizedResponse | PayloadTooLargeResponse | BadGatewayResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadCurrentUserAvatar>>, TError,{data: BodyType<UploadCurrentUserAvatarBody>}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadCurrentUserAvatar>>,
+        TError,
+        {data: BodyType<UploadCurrentUserAvatarBody>},
+        TContext
+      > => {
+      return useMutation(getUploadCurrentUserAvatarMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Update current user profile
  */
 export const updateCurrentUserProfile = (
@@ -348,3 +417,123 @@ export const useUpdateCurrentUserPassword = <TError = ErrorType<BadRequestRespon
       > => {
       return useMutation(getUpdateCurrentUserPasswordMutationOptions(options), queryClient);
     }
+    /**
+ * @summary Get user profile by id
+ */
+export const getUserById = (
+    userId: number,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<UserResponse>(
+      {url: `/api/v1/users/${userId}`, method: 'GET', signal
+    },
+      );
+    }
+
+
+
+
+export const getGetUserByIdQueryKey = (userId: number,) => {
+    return [
+    `/api/v1/users/${userId}`
+    ] as const;
+    }
+
+
+export const useGetUserByIdQueryOptions = <TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse>>(userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUserByIdQueryKey(userId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserById>>> = ({ signal }) => getUserById(userId, signal);
+
+
+
+      const customOptions = withDefaultQueryOptions({...queryOptions, queryKey, queryFn}, { userId });
+
+   return  customOptions as UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUserByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getUserById>>>
+export type GetUserByIdQueryError = ErrorType<UnauthorizedResponse | NotFoundResponse>
+
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse>>(
+ userId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUserById>>,
+          TError,
+          Awaited<ReturnType<typeof getUserById>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user profile by id
+ */
+
+export function useGetUserById<TData = Awaited<ReturnType<typeof getUserById>>, TError = ErrorType<UnauthorizedResponse | NotFoundResponse>>(
+ userId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUserById>>, TError, TData>>, }
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = useGetUserByIdQueryOptions(userId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+/**
+ * @summary Get user profile by id
+ */
+export const invalidateGetUserById = async (
+ queryClient: QueryClient, userId: number, options?: InvalidateOptions
+  ): Promise<QueryClient> => {
+
+  await queryClient.invalidateQueries({ queryKey: withDefaultQueryOptions({ queryKey: getGetUserByIdQueryKey(userId) }, { userId }).queryKey }, options);
+
+  return queryClient;
+}
+
+/**
+ * @summary Get user profile by id
+ */
+export const useSetGetUserByIdQueryData = () => {
+  const queryClient = useQueryClient();
+  return (userId: number,updater: Awaited<ReturnType<typeof getUserById>> | undefined | ((old: Awaited<ReturnType<typeof getUserById>> | undefined) => Awaited<ReturnType<typeof getUserById>> | undefined)) => {
+    queryClient.setQueryData(getGetUserByIdQueryKey(userId), updater);
+  };
+}
+
+/**
+ * @summary Get user profile by id
+ */
+export const useGetGetUserByIdQueryData = () => {
+  const queryClient = useQueryClient();
+  return (userId: number,) =>
+    queryClient.getQueryData<Awaited<ReturnType<typeof getUserById>>>(getGetUserByIdQueryKey(userId));
+}
+
+

@@ -45,6 +45,14 @@ test.describe('accessibility checks @a11y', () => {
     await expectNoA11yViolations(authenticatedPage)
   })
 
+  test('itinerary calendar has no automated accessibility violations', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/trips/1/itinerary?view=calendar&month=2026-06')
+    await expect(
+      authenticatedPage.getByRole('heading', { name: 'June 2026' }),
+    ).toBeVisible()
+    await expectNoA11yViolations(authenticatedPage)
+  })
+
   test('packing page has no automated accessibility violations', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/trips/1/packing')
     await expect(
@@ -57,6 +65,22 @@ test.describe('accessibility checks @a11y', () => {
     await authenticatedPage.goto('/trips/1/budget')
     await authenticatedPage.getByRole('button', { name: 'Add cost' }).click()
     await expect(authenticatedPage.getByRole('dialog')).toBeVisible()
+    await expectNoA11yViolations(authenticatedPage)
+  })
+
+  test('profile page has no automated accessibility violations', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/profile')
+    await expect(
+      authenticatedPage.getByRole('heading', { name: 'Profile' }),
+    ).toBeVisible()
+    await expectNoA11yViolations(authenticatedPage)
+  })
+
+  test('members page has no automated accessibility violations', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/trips/1/members')
+    await expect(
+      authenticatedPage.getByRole('heading', { name: 'Members' }),
+    ).toBeVisible()
     await expectNoA11yViolations(authenticatedPage)
   })
 })

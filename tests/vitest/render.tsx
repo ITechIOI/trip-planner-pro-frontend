@@ -1,8 +1,13 @@
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
+import { CssBaseline, ThemeProvider } from '@mui/material'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { LocalizationProvider } from '@mui/x-date-pickers'
 import { render, type RenderOptions } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { appTheme } from '@/app/theme'
+import { ToastProvider } from '@/shared/components/toast'
 import { createTestQueryClient } from './query-client'
 
 type RenderWithProvidersOptions = Omit<RenderOptions, 'wrapper'> & {
@@ -24,15 +29,21 @@ export const renderWithProviders = (
 
   const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        {routePath ? (
-          <Routes>
-            <Route path={routePath} element={children} />
-          </Routes>
-        ) : (
-          children
-        )}
-      </MemoryRouter>
+      <ThemeProvider theme={appTheme}>
+        <CssBaseline />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <MemoryRouter initialEntries={[route]}>
+            {routePath ? (
+              <Routes>
+                <Route path={routePath} element={children} />
+              </Routes>
+            ) : (
+              children
+            )}
+            <ToastProvider />
+          </MemoryRouter>
+        </LocalizationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 

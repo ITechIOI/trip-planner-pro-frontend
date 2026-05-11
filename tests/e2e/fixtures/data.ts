@@ -13,6 +13,9 @@ export {
   createPackingItem,
   createTestData,
   createTrip,
+  createTripMember,
+  createUser,
+  findUserById,
   getNestedId,
   getTripId,
   nextId,
@@ -28,5 +31,7 @@ export type {
   PageResponse,
   TestData,
   Trip,
+  TripMember,
+  User,
   WarningLevel,
 } from '../../shared/mock-api'

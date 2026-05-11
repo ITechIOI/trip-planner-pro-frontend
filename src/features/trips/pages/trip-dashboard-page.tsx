@@ -1,3 +1,4 @@
+import { Box } from '@mui/material'
 import { useRequiredTripId } from '@/app/route-helpers'
 import { DashboardMetrics } from '@/features/trips/components/dashboard-metrics'
 import { DashboardSidePanels } from '@/features/trips/components/dashboard-side-panels'
@@ -12,7 +13,11 @@ export const TripDashboardPage = () => {
   const dashboard = dashboardQuery.data as TripDashboardResponse | undefined
 
   return (
-    <section className="page-stack">
+    <Box
+      className="page-stack"
+      component="section"
+      sx={{ display: 'grid', gap: 2.75 }}
+    >
       <PageHeader
         title="Dashboard"
         description="A focused overview of the itinerary, packing progress, budget usage, unpaid items, and overdue activities."
@@ -31,12 +36,23 @@ export const TripDashboardPage = () => {
         <>
           <DashboardMetrics dashboard={dashboard} />
 
-          <div className="dashboard-grid">
+          <Box
+            className="dashboard-grid"
+            sx={{
+              display: 'grid',
+              alignItems: 'start',
+              gap: 2,
+              gridTemplateColumns: {
+                xs: '1fr',
+                lg: 'minmax(0, 1.7fr) minmax(320px, 0.8fr)',
+              },
+            }}
+          >
             <DashboardTimeline dashboard={dashboard} />
             <DashboardSidePanels dashboard={dashboard} />
-          </div>
+          </Box>
         </>
       ) : null}
-    </section>
+    </Box>
   )
 }

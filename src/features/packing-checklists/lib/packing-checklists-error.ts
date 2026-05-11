@@ -18,6 +18,14 @@ type PackingChecklistsApiError =
   | QueryTripPackingChecklistsQueryError
   | UpdatePackingChecklistMutationError;
 
+const packingActionMessages = {
+  401: "Your session expired. Sign in again.",
+  403: "You do not have permission to change this checklist.",
+  404: "This packing item no longer exists.",
+  network: "Connection lost. Check your internet and retry.",
+  timeout: "The packing request took too long. Please try again.",
+};
+
 export const getPackingChecklistsErrorMessage = (
   error: PackingChecklistsApiError,
 ) => {
@@ -29,3 +37,38 @@ export const getPackingChecklistsErrorMessage = (
     default: "Unable to load checklist data. Please try again later.",
   });
 };
+
+export const getCreatePackingChecklistErrorMessage = (
+  error: unknown,
+) =>
+  getApiErrorMessage(error, {
+    ...packingActionMessages,
+    400: "Check the packing item details and try again.",
+    default: "Packing item could not be added. Please try again.",
+  });
+
+export const getUpdatePackingChecklistErrorMessage = (
+  error: unknown,
+) =>
+  getApiErrorMessage(error, {
+    ...packingActionMessages,
+    400: "Check the packing item details and try again.",
+    default: "Packing item could not be saved. Please try again.",
+  });
+
+export const getDeletePackingChecklistErrorMessage = (
+  error: unknown,
+) =>
+  getApiErrorMessage(error, {
+    ...packingActionMessages,
+    default: "Packing item could not be deleted. Please try again.",
+  });
+
+export const getTogglePackedErrorMessage = (
+  error: unknown,
+) =>
+  getApiErrorMessage(error, {
+    ...packingActionMessages,
+    400: "Packed status could not be changed with the current values.",
+    default: "Packed status could not be updated. Please try again.",
+  });

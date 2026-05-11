@@ -5,6 +5,22 @@
  * REST API documentation for Trip Planner Pro backend.
  * OpenAPI spec version: 1.0.0
  */
-import type { CreateBudgetRequest } from './createBudgetRequest';
+import type { BudgetCategory } from './budgetCategory';
+import type { PaymentStatus } from './paymentStatus';
 
-export type UpdateBudgetRequest = CreateBudgetRequest;
+/**
+ * Partial update. Omitted fields are unchanged. Explicit null clears actualCost only; itemName, category, estimatedCost, and paymentStatus must not be null when present. Final state must include actualCost when paymentStatus is PAID.
+ */
+export interface UpdateBudgetRequest {
+  /** @maxLength 200 */
+  itemName?: string;
+  category?: BudgetCategory;
+  /** @minimum 0 */
+  estimatedCost?: number;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  actualCost?: number | null;
+  paymentStatus?: PaymentStatus;
+}

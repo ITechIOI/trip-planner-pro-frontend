@@ -8,7 +8,9 @@ import {
   computeBudgetSummary,
   computeDashboard,
   createMockApiState,
+  createUser,
   createTestData,
+  findUserById,
   getNestedId,
   getTripId,
   nextId,
@@ -19,6 +21,8 @@ import {
   type PackingItem,
   type TestData,
   type Trip,
+  type TripMember,
+  type User,
 } from './data'
 import { freezeBrowserTime } from './visual'
 
@@ -40,6 +44,11 @@ const respondJson = async (route: Route, body: unknown, status = 200) => {
   })
 }
 
+const transparentPng = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+  'base64',
+)
+
 export const installMockApi = async (
   page: Page,
   options: MockApiOptions = {},
@@ -47,6 +56,14 @@ export const installMockApi = async (
   await freezeBrowserTime(page)
 
   const state = createMockApiState(options.data ?? createTestData())
+
+  await page.route('https://cdn.example.test/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: transparentPng,
+    })
+  })
 
   await page.route('**/api/v1/**', async (route) => {
     const request = route.request()
@@ -74,6 +91,47 @@ export const installMockApi = async (
       return
     }
 
+    if (method === 'GET' && pathname === '/api/v1/users/me') {
+      await respondJson(route, state.data.currentUser)
+      return
+    }
+
+    if (method === 'PATCH' && pathname === '/api/v1/users/me/avatar') {
+      state.data.currentUser = {
+        ...state.data.currentUser,
+        avatarUrl: 'https://cdn.example.test/avatar.png',
+      }
+      state.requests.userRequestOrder.push('avatar')
+      state.requests.userAvatarUploads.push(state.data.currentUser)
+      await respondJson(route, state.data.currentUser)
+      return
+    }
+
+    if (method === 'PATCH' && pathname === '/api/v1/users/me/profile') {
+      const body = await readJsonBody<Partial<User>>(route)
+      state.requests.userProfileUpdateBodies.push(body)
+      state.data.currentUser = {
+        ...state.data.currentUser,
+        ...body,
+      }
+      state.requests.userRequestOrder.push('profile')
+      state.requests.userProfileUpdates.push(state.data.currentUser)
+      await respondJson(route, state.data.currentUser)
+      return
+    }
+
+    if (method === 'GET' && pathname.startsWith('/api/v1/users/')) {
+      const userId = getNestedId(pathname)
+      const user = userId ? findUserById(state.data, userId) : undefined
+
+      await respondJson(
+        route,
+        user ?? { message: 'Not found' },
+        user ? 200 : 404,
+      )
+      return
+    }
+
     if (
       method === 'GET' &&
       (pathname === '/api/v1/trips' || pathname === '/api/v1/trips/query')
@@ -88,10 +146,12 @@ export const installMockApi = async (
 
     if (method === 'POST' && pathname === '/api/v1/trips') {
       const body = await readJsonBody<Partial<Trip>>(route)
+      state.requests.tripCreates.push(body)
       const trip = {
         id: nextId(state.data.trips),
         name: body.name ?? 'Untitled trip',
         estimatedBudget: body.estimatedBudget ?? 0,
+        ownerId: state.data.currentUser.id,
         startDate: body.startDate ?? null,
         endDate: body.endDate ?? null,
       }
@@ -134,6 +194,82 @@ export const installMockApi = async (
       pathname === `/api/v1/trips/${tripId}/dashboard`
     ) {
       await respondJson(route, computeDashboard(tripId, state.data))
+      return
+    }
+
+    if (
+      tripId &&
+      method === 'GET' &&
+      pathname === `/api/v1/trips/${tripId}/members`
+    ) {
+      state.requests.tripMembersQuery.push(request.url())
+      await respondJson(
+        route,
+        pageItems(
+          state.data.tripMembers.filter((item) => item.tripId === tripId),
+          url,
+        ),
+      )
+      return
+    }
+
+    if (
+      tripId &&
+      method === 'POST' &&
+      pathname === `/api/v1/trips/${tripId}/members`
+    ) {
+      const body = await readJsonBody<{ email?: string; role?: string }>(route)
+      const userId = nextId(state.data.tripMembers.map((item) => ({ id: item.userId })))
+      const email = body.email?.trim() || `member-${userId}@example.com`
+      const member: TripMember = {
+        id: nextId(state.data.tripMembers),
+        userId,
+        tripId,
+        role: body.role ?? 'VIEW',
+        user: createUser({
+          id: userId,
+          fullName: email.split('@')[0] ?? 'Trip member',
+          email,
+          phone: null,
+          username: email.split('@')[0] ?? `member${userId}`,
+        }),
+      }
+
+      state.data.tripMembers.unshift(member)
+      await respondJson(route, member, 201)
+      return
+    }
+
+    if (
+      tripId &&
+      pathname.startsWith(`/api/v1/trips/${tripId}/members/`) &&
+      method === 'PATCH'
+    ) {
+      const memberId = getNestedId(pathname)
+      const body = await readJsonBody<Partial<TripMember>>(route)
+      const index = state.data.tripMembers.findIndex((item) => item.id === memberId)
+
+      if (index >= 0) {
+        state.data.tripMembers[index] = {
+          ...state.data.tripMembers[index],
+          role: body.role ?? state.data.tripMembers[index].role,
+        }
+      }
+
+      await respondJson(route, state.data.tripMembers[index])
+      return
+    }
+
+    if (
+      tripId &&
+      pathname.startsWith(`/api/v1/trips/${tripId}/members/`) &&
+      method === 'DELETE'
+    ) {
+      const memberId = getNestedId(pathname)
+      state.data.tripMembers = state.data.tripMembers.filter(
+        (item) => item.id !== memberId,
+      )
+      await respondJson(route, null, 204)
       return
     }
 

@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { AXIOS_INSTANCE } from './custom-instance'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AXIOS_INSTANCE, customInstance } from './custom-instance'
 
 const getHeader = (
   headers: AxiosRequestConfig['headers'],
@@ -46,6 +46,10 @@ describe('custom axios instance', () => {
     window.localStorage.clear()
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('does not attach stale bearer tokens to auth endpoints', async () => {
     window.localStorage.setItem('tripPlannerPro.accessToken', 'stale-token')
 
@@ -64,5 +68,28 @@ describe('custom axios instance', () => {
     expect(getHeader(config?.headers, 'Authorization')).toBe(
       'Bearer valid-token',
     )
+  })
+
+  it('lets Axios set multipart boundaries for FormData requests', async () => {
+    const formData = new FormData()
+    formData.append('file', new File(['avatar'], 'avatar.png', { type: 'image/png' }))
+    const requestSpy = vi.spyOn(AXIOS_INSTANCE, 'request').mockResolvedValue({
+      data: {},
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config: {},
+    })
+
+    await customInstance({
+      data: formData,
+      headers: { 'Content-Type': 'multipart/form-data' },
+      method: 'PATCH',
+      url: '/api/v1/users/me/avatar',
+    })
+
+    expect(
+      getHeader(requestSpy.mock.calls[0]?.[0].headers, 'Content-Type'),
+    ).toBeUndefined()
   })
 })

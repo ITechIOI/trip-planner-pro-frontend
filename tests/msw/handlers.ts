@@ -8,6 +8,8 @@ import {
   computeBudgetSummary,
   computeDashboard,
   createMockApiState,
+  createUser,
+  findUserById,
   createTestData,
   getNestedId,
   nextId,
@@ -18,14 +20,18 @@ import {
   type PackingItem,
   type TestData,
   type Trip,
+  type TripMember,
+  type User,
 } from '../shared/mock-api'
 
 type MockOperation =
   | 'login'
   | 'register'
+  | 'user'
   | 'trips'
   | 'trip'
   | 'dashboard'
+  | 'tripMembers'
   | 'itineraries'
   | 'packing'
   | 'budgets'
@@ -124,6 +130,64 @@ export const handlers = [
     return scenarioResponse ?? jsonResponse({ accessToken: ACCESS_TOKEN })
   }),
 
+  http.get('*/api/v1/users/me', async () => {
+    const scenarioResponse = await maybeScenarioResponse('user')
+
+    return scenarioResponse ?? jsonResponse(state.data.currentUser)
+  }),
+
+  http.patch('*/api/v1/users/me/avatar', async ({ request }) => {
+    const scenarioResponse = await maybeScenarioResponse('user')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file')
+    const fileName = file instanceof File ? file.name : 'avatar.png'
+
+    state.data.currentUser = {
+      ...state.data.currentUser,
+      avatarUrl: `https://cdn.example.test/${fileName}`,
+    }
+    state.requests.userRequestOrder.push('avatar')
+    state.requests.userAvatarUploads.push(state.data.currentUser)
+
+    return jsonResponse(state.data.currentUser)
+  }),
+
+  http.patch('*/api/v1/users/me/profile', async ({ request }) => {
+    const scenarioResponse = await maybeScenarioResponse('user')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const body = await readJsonBody<Partial<User>>(request)
+    state.requests.userProfileUpdateBodies.push(body)
+    state.data.currentUser = {
+      ...state.data.currentUser,
+      ...body,
+    }
+    state.requests.userRequestOrder.push('profile')
+    state.requests.userProfileUpdates.push(state.data.currentUser)
+
+    return jsonResponse(state.data.currentUser)
+  }),
+
+  http.get('*/api/v1/users/:userId', async ({ params }) => {
+    const scenarioResponse = await maybeScenarioResponse('user')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const user = findUserById(state.data, Number(params.userId))
+
+    return user ? jsonResponse(user) : jsonResponse({ message: 'Not found' }, 404)
+  }),
+
   http.get('*/api/v1/trips', async ({ request }) => {
     const scenarioResponse = await maybeScenarioResponse('trips')
 
@@ -158,10 +222,12 @@ export const handlers = [
     }
 
     const body = await readJsonBody<Partial<Trip>>(request)
+    state.requests.tripCreates.push(body)
     const trip = {
       id: nextId(state.data.trips),
       name: body.name ?? 'Untitled trip',
       estimatedBudget: body.estimatedBudget ?? 0,
+      ownerId: state.data.currentUser.id,
       startDate: body.startDate ?? null,
       endDate: body.endDate ?? null,
     }
@@ -230,6 +296,82 @@ export const handlers = [
   http.delete('*/api/v1/trips/:tripId', async ({ params }) => {
     state.data.trips = state.data.trips.filter(
       (item) => item.id !== Number(params.tripId),
+    )
+
+    return emptyResponse()
+  }),
+
+  http.get('*/api/v1/trips/:tripId/members', async ({ params, request }) => {
+    const scenarioResponse = await maybeScenarioResponse('tripMembers')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const tripId = Number(params.tripId)
+    const url = new URL(request.url)
+    state.requests.tripMembersQuery.push(request.url)
+    const items = state.data.tripMembers.filter((item) => item.tripId === tripId)
+
+    return jsonResponse(pageItems(items, url))
+  }),
+
+  http.post('*/api/v1/trips/:tripId/members', async ({ params, request }) => {
+    const scenarioResponse = await maybeScenarioResponse('tripMembers')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const body = await readJsonBody<{ email?: string; role?: string }>(request)
+    const userId = nextId(state.data.tripMembers.map((item) => ({ id: item.userId })))
+    const email = body.email?.trim() || `member-${userId}@example.com`
+    const member: TripMember = {
+      id: nextId(state.data.tripMembers),
+      userId,
+      tripId: Number(params.tripId),
+      role: body.role ?? 'VIEW',
+      user: createUser({
+        id: userId,
+        fullName: email.split('@')[0] ?? 'Trip member',
+        email,
+        phone: null,
+        username: email.split('@')[0] ?? `member${userId}`,
+      }),
+    }
+
+    state.data.tripMembers.unshift(member)
+
+    return jsonResponse(member, 201)
+  }),
+
+  http.patch('*/api/v1/trips/:tripId/members/:memberId', async ({ request }) => {
+    const scenarioResponse = await maybeScenarioResponse('tripMembers')
+
+    if (scenarioResponse) {
+      return scenarioResponse
+    }
+
+    const memberId = getNestedId(new URL(request.url).pathname)
+    const body = await readJsonBody<Partial<TripMember>>(request)
+    const index = state.data.tripMembers.findIndex((item) => item.id === memberId)
+
+    if (index < 0) {
+      return jsonResponse({ message: 'Not found' }, 404)
+    }
+
+    state.data.tripMembers[index] = {
+      ...state.data.tripMembers[index],
+      role: body.role ?? state.data.tripMembers[index].role,
+    }
+
+    return jsonResponse(state.data.tripMembers[index])
+  }),
+
+  http.delete('*/api/v1/trips/:tripId/members/:memberId', async ({ request }) => {
+    const memberId = getNestedId(new URL(request.url).pathname)
+    state.data.tripMembers = state.data.tripMembers.filter(
+      (item) => item.id !== memberId,
     )
 
     return emptyResponse()

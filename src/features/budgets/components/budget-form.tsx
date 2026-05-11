@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Box, Stack, TextField } from '@mui/material'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { BudgetCategory, PaymentStatus, type BudgetResponse } from '@/shared'
@@ -15,7 +16,6 @@ import {
 type BudgetFormProps = {
   item?: BudgetResponse
   isPending?: boolean
-  hasSubmitError?: boolean
   onClose: () => void
   onSubmit: (values: BudgetFormValues) => void
 }
@@ -23,7 +23,6 @@ type BudgetFormProps = {
 export const BudgetForm = ({
   item,
   isPending = false,
-  hasSubmitError = false,
   onClose,
   onSubmit,
 }: BudgetFormProps) => {
@@ -49,76 +48,89 @@ export const BudgetForm = ({
   }, [form, item])
 
   return (
-    <form className="form-stack" onSubmit={form.handleSubmit(onSubmit)}>
-      <label className="field">
-        <span>Item name</span>
-        <input type="text" {...form.register('itemName')} />
-        <FieldError message={form.formState.errors.itemName?.message} />
-      </label>
+    <Box
+      className="form-stack"
+      component="form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      sx={{ display: 'grid', gap: 2 }}
+    >
+      <TextField
+        error={Boolean(form.formState.errors.itemName)}
+        helperText={<FieldError message={form.formState.errors.itemName?.message} />}
+        label="Item name"
+        {...form.register('itemName')}
+      />
 
-      <div className="form-grid">
-        <label className="field">
-          <span>Estimated cost</span>
-          <input
-            inputMode="numeric"
-            min="0"
-            type="number"
-            {...form.register('estimatedCost', { valueAsNumber: true })}
-          />
-          <FieldError message={form.formState.errors.estimatedCost?.message} />
-        </label>
-        <label className="field">
-          <span>Actual cost</span>
-          <input
-            inputMode="numeric"
-            min="0"
-            type="number"
-            {...form.register('actualCost', {
-              setValueAs: (value) =>
-                value === '' ? undefined : Number(value),
-            })}
-          />
-          <FieldError message={form.formState.errors.actualCost?.message} />
-        </label>
-      </div>
+      <Box
+        className="form-grid"
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
+        <TextField
+          error={Boolean(form.formState.errors.estimatedCost)}
+          helperText={<FieldError message={form.formState.errors.estimatedCost?.message} />}
+          label="Estimated cost"
+          slotProps={{ htmlInput: { inputMode: 'numeric', min: 0 } }}
+          type="number"
+          {...form.register('estimatedCost', { valueAsNumber: true })}
+        />
+        <TextField
+          error={Boolean(form.formState.errors.actualCost)}
+          helperText={<FieldError message={form.formState.errors.actualCost?.message} />}
+          label="Actual cost"
+          slotProps={{ htmlInput: { inputMode: 'numeric', min: 0 } }}
+          type="number"
+          {...form.register('actualCost', {
+            setValueAs: (value) => (value === '' ? undefined : Number(value)),
+          })}
+        />
+      </Box>
 
-      <div className="form-grid">
-        <label className="field">
-          <span>Category</span>
-          <select {...form.register('category')}>
-            {budgetCategoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Payment status</span>
-          <select {...form.register('paymentStatus')}>
-            {paymentStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <Box
+        className="form-grid"
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
+        <TextField
+          label="Category"
+          select
+          slotProps={{ select: { native: true } }}
+          {...form.register('category')}
+        >
+          {budgetCategoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+        <TextField
+          label="Payment status"
+          select
+          slotProps={{ select: { native: true } }}
+          {...form.register('paymentStatus')}
+        >
+          {paymentStatusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+      </Box>
 
-      {hasSubmitError ? (
-        <p className="form-error" role="alert">
-          Budget item could not be saved. Please retry.
-        </p>
-      ) : null}
-
-      <div className="form-actions">
+      <Stack className="form-actions" direction="row" spacing={1.25} sx={{ justifyContent: 'flex-end', pt: 1 }}>
         <Button type="button" onClick={onClose}>
           Cancel
         </Button>
         <Button type="submit" variant="primary" disabled={isPending}>
           {isPending ? 'Saving...' : item ? 'Save cost' : 'Add cost'}
         </Button>
-      </div>
-    </form>
+      </Stack>
+    </Box>
   )
 }

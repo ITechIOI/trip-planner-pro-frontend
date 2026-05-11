@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Partial update. Omitted fields are unchanged. Explicit null clears nullable date fields only; name and estimatedBudget must not be null when present.
+ */
 export interface UpdateTripRequest {
   /** @maxLength 200 */
   name?: string;

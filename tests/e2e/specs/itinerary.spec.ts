@@ -16,8 +16,6 @@ test.describe('itinerary', () => {
     const addDialog = page.getByRole('dialog', { name: 'Add activity' })
     await addDialog.getByLabel('Activity title').fill('Beach walk')
     await addDialog.getByLabel('Location').fill('My Khe Beach')
-    await addDialog.getByLabel('Start time').fill('2026-06-12T17:30')
-    await addDialog.getByLabel('End time').fill('2026-06-12T18:30')
     await addDialog.getByLabel('Category').selectOption('SIGHTSEEING')
     await addDialog.getByLabel('Priority').selectOption('LOW')
     await addDialog.getByRole('button', { name: 'Add activity' }).click()
@@ -54,11 +52,10 @@ test.describe('itinerary', () => {
   test('filters by date, time, category, status, priority, and search', async ({ page }) => {
     const api = await installMockApi(page)
 
-    await page.goto('/trips/1/itinerary')
+    await page.goto(
+      '/trips/1/itinerary?date=2026-06-10&startClock=18%3A00&endClock=20%3A00',
+    )
     const filters = page.locator('.filter-toolbar')
-    await filters.getByLabel('Date').fill('2026-06-10')
-    await filters.getByLabel('Start time').fill('18:00')
-    await filters.getByLabel('End time').fill('20:00')
     await filters.getByLabel('Category').selectOption('FOOD')
     await filters.getByLabel('Status').selectOption('PLANNED')
     await filters.getByLabel('Priority').selectOption('MEDIUM')
@@ -91,23 +88,17 @@ test.describe('itinerary', () => {
   test('invalid time filters show inline error and prevent new query', async ({ page }) => {
     const api = await installMockApi(page)
 
-    await page.goto('/trips/1/itinerary')
-    await expect(page.getByRole('heading', { name: 'Flight to Da Nang' })).toBeVisible()
+    await page.goto('/trips/1/itinerary?startClock=08%3A00')
     const queryCount = api.requests.itineraryQuery.length
-    const filters = page.locator('.filter-toolbar')
 
-    await filters.getByLabel('Start time').fill('08:00')
     await expect(page.getByRole('alert')).toContainText(
       'Choose a date before filtering by start or end time',
     )
     expect(api.requests.itineraryQuery.length).toBe(queryCount)
 
-    await filters.getByLabel('Date').fill('2026-06-10')
-    await expect(page).toHaveURL(/date=2026-06-10/)
-    await filters.getByLabel('Start time').fill('21:00')
-    await expect(page).toHaveURL(/startClock=21%3A00/)
-    await filters.getByLabel('End time').fill('08:00')
-    await expect(page).toHaveURL(/endClock=08%3A00/)
+    await page.goto(
+      '/trips/1/itinerary?date=2026-06-10&startClock=21%3A00&endClock=08%3A00',
+    )
     await expect(page.getByRole('alert')).toContainText(
       'End time must be after start time',
     )
@@ -150,8 +141,72 @@ test.describe('itinerary', () => {
 
     await expect(page).toHaveURL(/category=FOOD/)
     await expect(page).toHaveURL(/offset=50/)
+    await expect
+      .poll(() => api.requests.itineraryQuery.at(-1) ?? '')
+      .toContain('offset=50')
     expect(api.requests.itineraryQuery.at(-1)).toContain('category=FOOD')
     expect(api.requests.itineraryQuery.at(-1)).toContain('offset=50')
     expect(api.requests.itineraryQuery.at(-1)).toContain('limit=50')
+  })
+
+  test('calendar view highlights itinerary days and shows selected day details', async ({ page }) => {
+    const api = await installMockApi(page)
+
+    await page.goto('/trips/1/itinerary?view=calendar&month=2026-06')
+
+    await expect(page.getByRole('heading', { name: 'June 2026' })).toBeVisible()
+    await page
+      .getByRole('button', { name: /June 10, 2026, 3 itineraries/ })
+      .click()
+
+    await expect(page).toHaveURL(/view=calendar/)
+    await expect(page).toHaveURL(/date=2026-06-10/)
+    await expect(page.getByRole('heading', { name: 'Flight to Da Nang' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Dinner reservation' })).toBeVisible()
+    expect(api.requests.itineraryQuery.at(-1)).toContain('limit=50')
+    expect(api.requests.itineraryQuery.at(-1)).toContain('startTime=2026-06-01T00:00:00')
+    expect(api.requests.itineraryQuery.at(-1)).toContain('endTime=2026-06-30T23:59:59')
+  })
+
+  test('calendar month navigation does not drift in local timezones', async ({ page }) => {
+    const api = await installMockApi(page)
+
+    await page.goto('/trips/1/itinerary?view=calendar&month=2026-04')
+    await expect(page.getByRole('heading', { name: 'April 2026' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Next month' }).click()
+
+    await expect(page).toHaveURL(/month=2026-05/)
+    await expect(page.getByRole('heading', { name: 'May 2026' })).toBeVisible()
+    await expect
+      .poll(() => api.requests.itineraryQuery.at(-1) ?? '')
+      .toContain('startTime=2026-05-01T00:00:00')
+
+    await page.getByRole('button', { name: 'Previous month' }).click()
+
+    await expect(page).toHaveURL(/month=2026-04/)
+    await expect(page.getByRole('heading', { name: 'April 2026' })).toBeVisible()
+    expect(
+      api.requests.itineraryQuery.some((request) =>
+        request.includes('startTime=2026-04-01T00:00:00'),
+      ),
+    ).toBe(true)
+  })
+
+  test('switching trips preserves itinerary route and active filters but resets pagination', async ({ page }) => {
+    await installMockApi(page)
+
+    await page.goto('/trips/1/itinerary?date=2026-06-10&category=FOOD&offset=50')
+    await expect(
+      page.getByRole('heading', { name: 'Itinerary', exact: true }),
+    ).toBeVisible()
+
+    await page.getByLabel('Switch trip').click()
+    await page.getByRole('option', { name: 'Empty Beach Weekend' }).click()
+
+    await expect(page).toHaveURL(/\/trips\/2\/itinerary/)
+    await expect(page).toHaveURL(/date=2026-06-10/)
+    await expect(page).toHaveURL(/category=FOOD/)
+    await expect(page).not.toHaveURL(/offset=50/)
   })
 })

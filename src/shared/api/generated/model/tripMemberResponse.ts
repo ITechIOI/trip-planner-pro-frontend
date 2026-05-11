@@ -6,10 +6,12 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { TripMemberRole } from './tripMemberRole';
+import type { UserResponse } from './userResponse';
 
 export interface TripMemberResponse {
   id?: number;
   userId?: number;
   tripId?: number;
   role?: TripMemberRole;
+  user?: UserResponse;
 }

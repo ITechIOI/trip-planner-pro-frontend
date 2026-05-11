@@ -39,6 +39,15 @@ test.describe('@visual visual regression', () => {
     await expect(page).toHaveScreenshot('itinerary-filters.png', { fullPage: true })
   })
 
+  test('itinerary calendar', async ({ page }) => {
+    await installMockApi(page)
+    await mockAuthenticatedUser(page)
+    await page.goto('/trips/1/itinerary?view=calendar&month=2026-06&date=2026-06-10')
+    await stabilizeVisualPage(page)
+
+    await expect(page).toHaveScreenshot('itinerary-calendar.png', { fullPage: true })
+  })
+
   test('packing page', async ({ page }) => {
     await installMockApi(page)
     await mockAuthenticatedUser(page)
@@ -55,6 +64,15 @@ test.describe('@visual visual regression', () => {
     await stabilizeVisualPage(page)
 
     await expect(page).toHaveScreenshot('budget-page.png', { fullPage: true })
+  })
+
+  test('members page', async ({ page }) => {
+    await installMockApi(page)
+    await mockAuthenticatedUser(page)
+    await page.goto('/trips/1/members')
+    await stabilizeVisualPage(page)
+
+    await expect(page).toHaveScreenshot('members-page.png', { fullPage: true })
   })
 
   test('dialog state', async ({ page }) => {
@@ -75,5 +93,35 @@ test.describe('@visual visual regression', () => {
     await stabilizeVisualPage(page)
 
     await expect(page).toHaveScreenshot('mobile-dashboard.png', { fullPage: true })
+  })
+
+  test('mobile itinerary', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await installMockApi(page)
+    await mockAuthenticatedUser(page)
+    await page.goto('/trips/1/itinerary?date=2026-06-10')
+    await stabilizeVisualPage(page)
+
+    await expect(page).toHaveScreenshot('mobile-itinerary.png', { fullPage: true })
+  })
+
+  test('mobile packing', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await installMockApi(page)
+    await mockAuthenticatedUser(page)
+    await page.goto('/trips/1/packing')
+    await stabilizeVisualPage(page)
+
+    await expect(page).toHaveScreenshot('mobile-packing.png', { fullPage: true })
+  })
+
+  test('mobile budget', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await installMockApi(page)
+    await mockAuthenticatedUser(page)
+    await page.goto('/trips/1/budget')
+    await stabilizeVisualPage(page)
+
+    await expect(page).toHaveScreenshot('mobile-budget.png', { fullPage: true })
   })
 })

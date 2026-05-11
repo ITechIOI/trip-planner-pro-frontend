@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Box, Stack, TextField } from '@mui/material'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -21,7 +22,6 @@ import {
 type PackingFormProps = {
   item?: PackingChecklistResponse
   isPending?: boolean
-  hasSubmitError?: boolean
   onClose: () => void
   onSubmit: (values: PackingFormValues) => void
 }
@@ -29,7 +29,6 @@ type PackingFormProps = {
 export const PackingForm = ({
   item,
   isPending = false,
-  hasSubmitError = false,
   onClose,
   onSubmit,
 }: PackingFormProps) => {
@@ -55,71 +54,85 @@ export const PackingForm = ({
   }, [form, item])
 
   return (
-    <form className="form-stack" onSubmit={form.handleSubmit(onSubmit)}>
-      <label className="field">
-        <span>Item name</span>
-        <input type="text" {...form.register('name')} />
-        <FieldError message={form.formState.errors.name?.message} />
-      </label>
+    <Box
+      className="form-stack"
+      component="form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      sx={{ display: 'grid', gap: 2 }}
+    >
+      <TextField
+        error={Boolean(form.formState.errors.name)}
+        helperText={<FieldError message={form.formState.errors.name?.message} />}
+        label="Item name"
+        {...form.register('name')}
+      />
 
-      <label className="field">
-        <span>Quantity</span>
-        <input
-          inputMode="numeric"
-          min="0"
-          type="number"
-          {...form.register('quantity', { valueAsNumber: true })}
-        />
-        <FieldError message={form.formState.errors.quantity?.message} />
-      </label>
+      <TextField
+        error={Boolean(form.formState.errors.quantity)}
+        helperText={<FieldError message={form.formState.errors.quantity?.message} />}
+        label="Quantity"
+        slotProps={{ htmlInput: { inputMode: 'numeric', min: 0 } }}
+        type="number"
+        {...form.register('quantity', { valueAsNumber: true })}
+      />
 
-      <div className="form-grid form-grid--three">
-        <label className="field">
-          <span>Category</span>
-          <select {...form.register('category')}>
-            {packingCategoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Required status</span>
-          <select {...form.register('requiredStatus')}>
-            {requiredStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          <span>Packed status</span>
-          <select {...form.register('packedStatus')}>
-            {packedStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <Box
+        className="form-grid form-grid--three"
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(3, minmax(0, 1fr))',
+          },
+        }}
+      >
+        <TextField
+          label="Category"
+          select
+          slotProps={{ select: { native: true } }}
+          {...form.register('category')}
+        >
+          {packingCategoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+        <TextField
+          label="Required status"
+          select
+          slotProps={{ select: { native: true } }}
+          {...form.register('requiredStatus')}
+        >
+          {requiredStatusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+        <TextField
+          label="Packed status"
+          select
+          slotProps={{ select: { native: true } }}
+          {...form.register('packedStatus')}
+        >
+          {packedStatusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+      </Box>
 
-      {hasSubmitError ? (
-        <p className="form-error" role="alert">
-          Packing item could not be saved. Please retry.
-        </p>
-      ) : null}
-
-      <div className="form-actions">
+      <Stack className="form-actions" direction="row" spacing={1.25} sx={{ justifyContent: 'flex-end', pt: 1 }}>
         <Button type="button" onClick={onClose}>
           Cancel
         </Button>
         <Button type="submit" variant="primary" disabled={isPending}>
           {isPending ? 'Saving...' : item ? 'Save item' : 'Add item'}
         </Button>
-      </div>
-    </form>
+      </Stack>
+    </Box>
   )
 }

@@ -4,8 +4,10 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   ErrorState,
   FieldError,
+  FilterToolbar,
   PaginationControls,
   ProgressBar,
+  StatCard,
 } from './ui'
 
 describe('shared UI components', () => {
@@ -55,5 +57,32 @@ describe('shared UI components', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Budget data could not be loaded.',
     )
+  })
+
+  it('renders stat card progress with accessible labelling', () => {
+    render(
+      <StatCard
+        label="Packing complete"
+        value="72%"
+        detail="43 of 60 packed"
+        progress={72}
+        progressLabel="Packing progress"
+      />,
+    )
+
+    expect(screen.getByText('Packing complete')).toBeVisible()
+    expect(screen.getByRole('progressbar', { name: 'Packing progress' }))
+      .toHaveAttribute('aria-valuenow', '72')
+  })
+
+  it('groups filters in a labelled toolbar', () => {
+    render(
+      <FilterToolbar label="Budget filters">
+        <button type="button">Reset</button>
+      </FilterToolbar>,
+    )
+
+    expect(screen.getByLabelText('Budget filters')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Reset' })).toBeVisible()
   })
 })

@@ -1,6 +1,9 @@
+import { Box } from '@mui/material'
+import { keepPreviousData } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import emptyTravelUrl from '@/assets/generated/empty-travel.svg'
 import { useRequiredTripId } from '@/app/route-helpers'
 import { PackingFilters } from '@/features/packing-checklists/components/packing-filters'
 import { PackingForm } from '@/features/packing-checklists/components/packing-form'
@@ -12,6 +15,12 @@ import {
   useQueryTripPackingChecklists,
   useUpdatePackingChecklistAction,
 } from '@/features/packing-checklists'
+import {
+  getCreatePackingChecklistErrorMessage,
+  getDeletePackingChecklistErrorMessage,
+  getTogglePackedErrorMessage,
+  getUpdatePackingChecklistErrorMessage,
+} from '@/features/packing-checklists/lib/packing-checklists-error'
 import type { PackingFormValues } from '@/features/packing-checklists/lib/packing-schema'
 import { useTripDashboard } from '@/features/trips'
 import {
@@ -25,6 +34,7 @@ import {
   AppDialog,
   Button,
   EmptyState,
+  EmptyIllustration,
   ErrorState,
   PageHeader,
   PaginationControls,
@@ -32,19 +42,23 @@ import {
 } from '@/shared/components/ui'
 import { compactParams } from '@/shared/lib/display'
 import { DEFAULT_PAGE_LIMIT, getPageOffset } from '@/shared/lib/pagination'
+import { showErrorToast, showSuccessToast } from '@/shared/components/toast-store'
+import { useDebouncedSearchParam } from '@/shared/lib/use-debounced-search-param'
+import { useTripAccess } from '@/features/trips'
 
 export const PackingPage = () => {
   const tripId = useRequiredTripId()
   const [searchParams, setSearchParams] = useSearchParams()
+  const search = useDebouncedSearchParam({ searchParams, setSearchParams })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<
     PackingChecklistResponse | undefined
   >()
-  const createItem = useCreatePackingChecklistAction({
-    mutation: { onSuccess: () => closeDialog() },
-  })
+  const createItem = useCreatePackingChecklistAction()
   const updateItem = useUpdatePackingChecklistAction()
   const deleteItem = useDeletePackingChecklistAction()
+  const tripAccess = useTripAccess(tripId)
+  const canManageResources = tripAccess.canManageResources
   const filters = useMemo(
     () =>
       compactParams({
@@ -56,7 +70,9 @@ export const PackingPage = () => {
       }) as QueryTripPackingChecklistsParams,
     [searchParams],
   )
-  const packingQuery = useQueryTripPackingChecklists(tripId ?? 0, filters)
+  const packingQuery = useQueryTripPackingChecklists(tripId ?? 0, filters, {
+    query: { placeholderData: keepPreviousData },
+  })
   const dashboardQuery = useTripDashboard(tripId ?? 0)
   const packingPage = packingQuery.data as PackingChecklistPageResponse | undefined
   const items = (packingPage?.items ?? []) as PackingChecklistResponse[]
@@ -68,6 +84,29 @@ export const PackingPage = () => {
   function closeDialog() {
     setIsDialogOpen(false)
     setEditingItem(undefined)
+  }
+
+  const showReadOnlyToast = () => {
+    showErrorToast('You can view this trip, but your role cannot make changes.')
+  }
+
+  const openCreateDialog = () => {
+    if (!canManageResources) {
+      showReadOnlyToast()
+      return
+    }
+
+    setIsDialogOpen(true)
+  }
+
+  const openEditDialog = (item: PackingChecklistResponse) => {
+    if (!canManageResources) {
+      showReadOnlyToast()
+      return
+    }
+
+    setEditingItem(item)
+    setIsDialogOpen(true)
   }
 
   const updateFilter = (key: string, value: string) => {
@@ -95,20 +134,46 @@ export const PackingPage = () => {
     setSearchParams(next)
   }
 
+  const resetFilters = () => {
+    setSearchParams(new URLSearchParams())
+  }
+
   const submitItem = (values: PackingFormValues) => {
     if (!tripId) {
+      return
+    }
+
+    if (!canManageResources) {
+      showReadOnlyToast()
       return
     }
 
     if (editingItem?.id) {
       updateItem.mutate(
         { tripId, checklistId: editingItem.id, data: values },
-        { onSuccess: closeDialog },
+        {
+          onError: (error) =>
+            showErrorToast(getUpdatePackingChecklistErrorMessage(error)),
+          onSuccess: () => {
+            closeDialog()
+            showSuccessToast('Packing item saved.')
+          },
+        },
       )
       return
     }
 
-    createItem.mutate({ tripId, data: values })
+    createItem.mutate(
+      { tripId, data: values },
+      {
+        onError: (error) =>
+          showErrorToast(getCreatePackingChecklistErrorMessage(error)),
+        onSuccess: () => {
+          closeDialog()
+          showSuccessToast('Packing item added.')
+        },
+      },
+    )
   }
 
   const togglePacked = (item: PackingChecklistResponse) => {
@@ -116,20 +181,31 @@ export const PackingPage = () => {
       return
     }
 
-    updateItem.mutate({
-      tripId,
-      checklistId: item.id,
-      data: {
-        name: item.name,
-        quantity: item.quantity ?? 0,
-        category: item.category,
-        requiredStatus: item.requiredStatus,
-        packedStatus:
-          item.packedStatus === PackedStatus.PACKED
-            ? PackedStatus.NOT_PACKED
-            : PackedStatus.PACKED,
+    if (!canManageResources) {
+      showReadOnlyToast()
+      return
+    }
+
+    updateItem.mutate(
+      {
+        tripId,
+        checklistId: item.id,
+        data: {
+          name: item.name,
+          quantity: item.quantity ?? 0,
+          category: item.category,
+          requiredStatus: item.requiredStatus,
+          packedStatus:
+            item.packedStatus === PackedStatus.PACKED
+              ? PackedStatus.NOT_PACKED
+              : PackedStatus.PACKED,
+        },
       },
-    })
+      {
+        onError: (error) => showErrorToast(getTogglePackedErrorMessage(error)),
+        onSuccess: () => showSuccessToast('Packed status updated.'),
+      },
+    )
   }
 
   const deletePackingItem = (item: PackingChecklistResponse) => {
@@ -137,23 +213,37 @@ export const PackingPage = () => {
       return
     }
 
-    deleteItem.mutate({ tripId, checklistId: item.id })
+    if (!canManageResources) {
+      showReadOnlyToast()
+      return
+    }
+
+    deleteItem.mutate(
+      { tripId, checklistId: item.id },
+      {
+        onError: (error) =>
+          showErrorToast(getDeletePackingChecklistErrorMessage(error)),
+        onSuccess: () => showSuccessToast('Packing item deleted.'),
+      },
+    )
   }
 
   return (
-    <section className="page-stack">
+    <Box
+      className="page-stack"
+      component="section"
+      sx={{ display: 'grid', gap: 2.75 }}
+    >
       <PageHeader
         title="Packing"
         description="Track packed and unpacked items with real-time progress."
         action={
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <Plus size={16} />
-            Add item
-          </Button>
+          canManageResources ? (
+            <Button type="button" variant="primary" onClick={openCreateDialog}>
+              <Plus size={16} />
+              Add item
+            </Button>
+          ) : undefined
         }
       />
 
@@ -166,8 +256,11 @@ export const PackingPage = () => {
       />
 
       <PackingFilters
+        onSearchChange={search.onChange}
         searchParams={searchParams}
+        searchValue={search.value}
         onFilterChange={updateFilter}
+        onReset={resetFilters}
       />
 
       {packingQuery.isLoading ? <Skeleton rows={5} /> : null}
@@ -181,26 +274,23 @@ export const PackingPage = () => {
         <EmptyState
           title="No packing items yet"
           description="Add the first packing item and mark it packed when ready."
+          illustration={<EmptyIllustration src={emptyTravelUrl} alt="" />}
           action={
-            <Button
-              type="button"
-              variant="primary"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <Plus size={16} />
-              Add item
-            </Button>
+            canManageResources ? (
+              <Button type="button" variant="primary" onClick={openCreateDialog}>
+                <Plus size={16} />
+                Add item
+              </Button>
+            ) : undefined
           }
         />
       ) : null}
 
       <PackingList
+        canManage={canManageResources}
         items={items}
         onDelete={deletePackingItem}
-        onEdit={(item) => {
-          setEditingItem(item)
-          setIsDialogOpen(true)
-        }}
+        onEdit={openEditDialog}
         onTogglePacked={togglePacked}
       />
 
@@ -213,7 +303,7 @@ export const PackingPage = () => {
       />
 
       <AppDialog
-        open={isDialogOpen}
+        open={canManageResources && isDialogOpen}
         onOpenChange={setIsDialogOpen}
         title={editingItem ? 'Edit packing item' : 'Add packing item'}
         description="Keep quantity, category, and packed state accurate."
@@ -222,12 +312,11 @@ export const PackingPage = () => {
           <PackingForm
             item={editingItem}
             isPending={createItem.isPending || updateItem.isPending}
-            hasSubmitError={Boolean(createItem.error ?? updateItem.error)}
             onClose={closeDialog}
             onSubmit={submitItem}
           />
         ) : null}
       </AppDialog>
-    </section>
+    </Box>
   )
 }

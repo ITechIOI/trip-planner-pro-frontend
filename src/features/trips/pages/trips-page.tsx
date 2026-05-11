@@ -1,14 +1,22 @@
+import { Box } from '@mui/material'
 import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import emptyTravelUrl from '@/assets/generated/empty-travel.svg'
 import {
   useCreateTripAction,
   useDeleteTripAction,
+  useTripAccessMap,
   useTrips,
   useUpdateTripAction,
 } from '@/features/trips'
-import { TripCard } from '@/features/trips/components/trip-card'
 import { TripForm } from '@/features/trips/components/trip-form'
+import { TripList } from '@/features/trips/components/trip-list'
+import {
+  getCreateTripErrorMessage,
+  getDeleteTripErrorMessage,
+  getUpdateTripErrorMessage,
+} from '@/features/trips/lib/trips-error'
 import {
   normalizeTripDate,
   type TripFormValues,
@@ -18,12 +26,14 @@ import {
   AppDialog,
   Button,
   EmptyState,
+  EmptyIllustration,
   ErrorState,
   PaginationControls,
   PageHeader,
   Skeleton,
 } from '@/shared/components/ui'
 import { DEFAULT_PAGE_LIMIT, getPageOffset } from '@/shared/lib/pagination'
+import { showErrorToast, showSuccessToast } from '@/shared/components/toast-store'
 
 export const TripsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -35,26 +45,14 @@ export const TripsPage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingTrip, setEditingTrip] = useState<TripResponse | undefined>()
   const navigate = useNavigate()
-  const createTrip = useCreateTripAction({
-    mutation: {
-      onSuccess: (createdTrip) => {
-        closeDialog()
-        if (createdTrip.id) {
-          navigate(`/trips/${createdTrip.id}/dashboard`)
-        }
-      },
-    },
-  })
-  const updateTrip = useUpdateTripAction({
-    mutation: {
-      onSuccess: () => closeDialog(),
-    },
-  })
+  const createTrip = useCreateTripAction()
+  const updateTrip = useUpdateTripAction()
   const tripsPage = tripsQuery.data as TripPageResponse | undefined
   const trips = useMemo(
     () => (tripsPage?.items ?? []) as TripResponse[],
     [tripsPage],
   )
+  const tripAccessMap = useTripAccessMap(trips)
 
   const openCreateDialog = () => {
     setEditingTrip(undefined)
@@ -80,11 +78,32 @@ export const TripsPage = () => {
     }
 
     if (editingTrip?.id) {
-      updateTrip.mutate({ tripId: editingTrip.id, data })
+      updateTrip.mutate(
+        { tripId: editingTrip.id, data },
+        {
+          onError: (error) => showErrorToast(getUpdateTripErrorMessage(error)),
+          onSuccess: () => {
+            closeDialog()
+            showSuccessToast('Trip saved.')
+          },
+        },
+      )
       return
     }
 
-    createTrip.mutate({ data })
+    createTrip.mutate(
+      { data },
+      {
+        onError: (error) => showErrorToast(getCreateTripErrorMessage(error)),
+        onSuccess: (createdTrip) => {
+          closeDialog()
+          showSuccessToast('Trip created.')
+          if (createdTrip.id) {
+            navigate(`/trips/${createdTrip.id}/dashboard`)
+          }
+        },
+      },
+    )
   }
 
   const updateOffset = (offset: number) => {
@@ -100,7 +119,14 @@ export const TripsPage = () => {
   }
 
   return (
-    <main className="standalone-page trips-page">
+    <Box
+      className="page-stack trips-page"
+      component="section"
+      sx={{
+        display: 'grid',
+        gap: 2.75,
+      }}
+    >
       <PageHeader
         title="Trips"
         description="Choose a trip workspace or create a new plan for your family."
@@ -125,6 +151,7 @@ export const TripsPage = () => {
         <EmptyState
           title="No trips yet"
           description="Create your first travel plan to start tracking itinerary, packing, and budget."
+          illustration={<EmptyIllustration src={emptyTravelUrl} alt="" />}
           action={
             <Button type="button" variant="primary" onClick={openCreateDialog}>
               <Plus size={16} />
@@ -134,16 +161,21 @@ export const TripsPage = () => {
         />
       ) : null}
 
-      <div className="trip-grid">
-        {trips.map((trip) => (
-          <TripCard
-            key={trip.id}
-            trip={trip}
-            onEdit={openEditDialog}
-            onDelete={(tripId) => deleteTrip.mutate({ tripId })}
-          />
-        ))}
-      </div>
+      <TripList
+        accessByTripId={tripAccessMap.accessByTripId}
+        offset={tripsPage?.offset ?? 0}
+        trips={trips}
+        onEdit={openEditDialog}
+        onDelete={(tripId) =>
+          deleteTrip.mutate(
+            { tripId },
+            {
+              onError: (error) => showErrorToast(getDeleteTripErrorMessage(error)),
+              onSuccess: () => showSuccessToast('Trip deleted.'),
+            },
+          )
+        }
+      />
 
       <PaginationControls
         offset={tripsPage?.offset}
@@ -152,12 +184,6 @@ export const TripsPage = () => {
         disabled={tripsQuery.isFetching}
         onOffsetChange={updateOffset}
       />
-
-      {deleteTrip.error ? (
-        <p className="form-error" role="alert">
-          Trip could not be deleted. Please retry.
-        </p>
-      ) : null}
 
       <AppDialog
         open={isDialogOpen}
@@ -168,11 +194,10 @@ export const TripsPage = () => {
         <TripForm
           trip={editingTrip}
           isPending={createTrip.isPending || updateTrip.isPending}
-          hasSubmitError={Boolean(createTrip.error ?? updateTrip.error)}
           onClose={closeDialog}
           onSubmit={handleTripSubmit}
         />
       </AppDialog>
-    </main>
+    </Box>
   )
 }

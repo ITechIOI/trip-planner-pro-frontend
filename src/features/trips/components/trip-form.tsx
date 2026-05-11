@@ -1,6 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Box, Stack, TextField } from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers'
+import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import type { TripResponse } from '@/shared'
 import { Button, FieldError } from '@/shared/components/ui'
 import { toDateInputValue } from '@/shared/lib/display'
@@ -9,10 +12,14 @@ import {
   tripSchema,
 } from '@/features/trips/lib/trip-schema'
 
+const toPickerDate = (value?: string) => (value ? dayjs(value) : null)
+
+const fromPickerDate = (value: Dayjs | null) =>
+  value?.isValid() ? value.format('YYYY-MM-DD') : ''
+
 type TripFormProps = {
   trip?: TripResponse
   isPending?: boolean
-  hasSubmitError?: boolean
   onClose: () => void
   onSubmit: (values: TripFormValues) => void
 }
@@ -20,7 +27,6 @@ type TripFormProps = {
 export const TripForm = ({
   trip,
   isPending = false,
-  hasSubmitError = false,
   onClose,
   onSubmit,
 }: TripFormProps) => {
@@ -44,49 +50,84 @@ export const TripForm = ({
   }, [form, trip])
 
   return (
-    <form className="form-stack" onSubmit={form.handleSubmit(onSubmit)}>
-      <label className="field">
-        <span>Trip name</span>
-        <input type="text" {...form.register('name')} />
-        <FieldError message={form.formState.errors.name?.message} />
-      </label>
+    <Box
+      className="form-stack"
+      component="form"
+      onSubmit={form.handleSubmit(onSubmit)}
+      sx={{ display: 'grid', gap: 2 }}
+    >
+      <TextField
+        error={Boolean(form.formState.errors.name)}
+        helperText={<FieldError message={form.formState.errors.name?.message} />}
+        label="Trip name"
+        {...form.register('name')}
+      />
 
-      <label className="field">
-        <span>Initial travel budget</span>
-        <input
-          inputMode="numeric"
-          min="0"
-          type="number"
-          {...form.register('estimatedBudget', { valueAsNumber: true })}
+      <TextField
+        error={Boolean(form.formState.errors.estimatedBudget)}
+        helperText={<FieldError message={form.formState.errors.estimatedBudget?.message} />}
+        label="Initial travel budget"
+        slotProps={{ htmlInput: { inputMode: 'numeric', min: 0 } }}
+        type="number"
+        {...form.register('estimatedBudget', { valueAsNumber: true })}
+      />
+
+      <Box
+        className="form-grid"
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
+        <Controller
+          control={form.control}
+          name="startDate"
+          render={({ field }) => (
+            <DatePicker
+              format="YYYY-MM-DD"
+              label="Start date"
+              onChange={(value) => field.onChange(fromPickerDate(value))}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  inputRef: field.ref,
+                  onBlur: field.onBlur,
+                },
+              }}
+              value={toPickerDate(field.value)}
+            />
+          )}
         />
-        <FieldError message={form.formState.errors.estimatedBudget?.message} />
-      </label>
+        <Controller
+          control={form.control}
+          name="endDate"
+          render={({ field }) => (
+            <DatePicker
+              format="YYYY-MM-DD"
+              label="End date"
+              onChange={(value) => field.onChange(fromPickerDate(value))}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  inputRef: field.ref,
+                  onBlur: field.onBlur,
+                },
+              }}
+              value={toPickerDate(field.value)}
+            />
+          )}
+        />
+      </Box>
 
-      <div className="form-grid">
-        <label className="field">
-          <span>Start date</span>
-          <input type="date" {...form.register('startDate')} />
-        </label>
-        <label className="field">
-          <span>End date</span>
-          <input type="date" {...form.register('endDate')} />
-        </label>
-      </div>
-
-      {hasSubmitError ? (
-        <p className="form-error" role="alert">
-          Trip could not be saved. Please check the fields and try again.
-        </p>
-      ) : null}
-
-      <div className="form-actions">
+      <Stack className="form-actions" direction="row" spacing={1.25} sx={{ justifyContent: 'flex-end', pt: 1 }}>
         <Button type="button" onClick={onClose}>
           Cancel
         </Button>
         <Button type="submit" variant="primary" disabled={isPending}>
           {isPending ? 'Saving...' : trip ? 'Save trip' : 'Create trip'}
         </Button>
-      </div>
-    </form>
+      </Stack>
+    </Box>
   )
 }

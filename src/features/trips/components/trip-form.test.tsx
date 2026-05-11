@@ -1,13 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { renderWithProviders } from '../../../../tests/vitest/render'
 import { TripForm } from './trip-form'
 
 describe('TripForm', () => {
   it('validates required name before submit', async () => {
     const user = userEvent.setup()
 
-    render(<TripForm onClose={vi.fn()} onSubmit={vi.fn()} />)
+    renderWithProviders(<TripForm onClose={vi.fn()} onSubmit={vi.fn()} />)
     await user.click(screen.getByRole('button', { name: 'Create trip' }))
 
     expect(await screen.findByText('Trip name is required')).toBeVisible()
@@ -17,7 +18,7 @@ describe('TripForm', () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
 
-    render(<TripForm onClose={vi.fn()} onSubmit={onSubmit} />)
+    renderWithProviders(<TripForm onClose={vi.fn()} onSubmit={onSubmit} />)
     await user.type(screen.getByLabelText('Trip name'), 'Da Nang')
     await user.clear(screen.getByLabelText('Initial travel budget'))
     await user.type(screen.getByLabelText('Initial travel budget'), '10000000')

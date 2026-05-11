@@ -9,4 +9,14 @@ export const tripSchema = z.object({
 
 export type TripFormValues = z.infer<typeof tripSchema>
 
-export const normalizeTripDate = (value?: string) => (value ? value : null)
+export const normalizeTripDate = (value?: string) => {
+  const normalizedValue = value?.trim()
+
+  if (!normalizedValue) {
+    return null
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)
+    ? `${normalizedValue}T00:00:00`
+    : normalizedValue
+}

@@ -7,6 +7,7 @@ export type Trip = {
   id: number
   name: string
   estimatedBudget: number
+  ownerId: number
   startDate: string | null
   endDate: string | null
 }
@@ -43,6 +44,23 @@ export type BudgetItem = {
   paymentStatus: string
 }
 
+export type TripMember = {
+  id: number
+  userId: number
+  tripId: number
+  role: string
+  user?: User
+}
+
+export type User = {
+  id: number
+  fullName: string
+  email: string | null
+  avatarUrl: string | null
+  phone: string | null
+  username: string
+}
+
 export type PageResponse<T> = {
   items: T[]
   offset: number
@@ -51,17 +69,25 @@ export type PageResponse<T> = {
 }
 
 export type TestData = {
+  currentUser: User
   trips: Trip[]
+  tripMembers: TripMember[]
   itineraries: Itinerary[]
   packingItems: PackingItem[]
   budgetItems: BudgetItem[]
 }
 
 export type MockApiRequests = {
+  tripCreates: Partial<Trip>[]
   tripsQuery: string[]
   itineraryQuery: string[]
   packingQuery: string[]
   budgetQuery: string[]
+  tripMembersQuery: string[]
+  userAvatarUploads: User[]
+  userProfileUpdateBodies: Partial<User>[]
+  userProfileUpdates: User[]
+  userRequestOrder: Array<'avatar' | 'profile'>
 }
 
 export type MockApiState = {
@@ -73,6 +99,7 @@ export const createTrip = (overrides: Partial<Trip> = {}): Trip => ({
   id: 1,
   name: 'Da Nang Family Trip',
   estimatedBudget: 12_000_000,
+  ownerId: 501,
   startDate: '2026-06-10',
   endDate: '2026-06-14',
   ...overrides,
@@ -119,13 +146,36 @@ export const createBudgetItem = (
   ...overrides,
 })
 
+export const createUser = (overrides: Partial<User> = {}): User => ({
+  id: 501,
+  fullName: 'Demo Traveler',
+  email: 'demo@example.com',
+  avatarUrl: null,
+  phone: '+84901234567',
+  username: 'demo',
+  ...overrides,
+})
+
+export const createTripMember = (
+  overrides: Partial<TripMember> = {},
+): TripMember => ({
+  id: 401,
+  userId: 501,
+  tripId: 1,
+  role: 'EDIT',
+  user: createUser(),
+  ...overrides,
+})
+
 export const createTestData = (): TestData => ({
+  currentUser: createUser(),
   trips: [
     createTrip(),
     createTrip({
       id: 2,
       name: 'Empty Beach Weekend',
       estimatedBudget: 5_000_000,
+      ownerId: 999,
       startDate: '2026-07-01',
       endDate: '2026-07-03',
     }),
@@ -133,6 +183,7 @@ export const createTestData = (): TestData => ({
       id: 3,
       name: 'Warning Budget Trip',
       estimatedBudget: 1_000_000,
+      ownerId: 999,
       startDate: '2026-08-01',
       endDate: '2026-08-04',
     }),
@@ -142,6 +193,33 @@ export const createTestData = (): TestData => ({
       estimatedBudget: 1_000_000,
       startDate: '2026-09-01',
       endDate: '2026-09-04',
+    }),
+  ],
+  tripMembers: [
+    createTripMember(),
+    createTripMember({
+      id: 402,
+      userId: 502,
+      role: 'VIEW',
+      user: createUser({
+        id: 502,
+        fullName: 'Taylor Planner',
+        email: 'taylor@example.com',
+        phone: null,
+        username: 'taylor',
+      }),
+    }),
+    createTripMember({
+      id: 403,
+      tripId: 2,
+      role: 'VIEW',
+      user: createUser(),
+    }),
+    createTripMember({
+      id: 404,
+      tripId: 3,
+      role: 'EDIT',
+      user: createUser(),
     }),
   ],
   itineraries: [
@@ -247,10 +325,16 @@ export const createTestData = (): TestData => ({
 export const createMockApiState = (data = createTestData()): MockApiState => ({
   data,
   requests: {
+    tripCreates: [],
     tripsQuery: [],
     itineraryQuery: [],
     packingQuery: [],
     budgetQuery: [],
+    tripMembersQuery: [],
+    userAvatarUploads: [],
+    userProfileUpdateBodies: [],
+    userProfileUpdates: [],
+    userRequestOrder: [],
   },
 })
 
@@ -281,6 +365,14 @@ export const pageItems = <T>(items: T[], url: URL): PageResponse<T> => {
 
 export const nextId = <T extends { id: number }>(items: T[]) =>
   Math.max(0, ...items.map((item) => item.id)) + 1
+
+export const findUserById = (data: TestData, userId: number) => {
+  const memberUsers = data.tripMembers
+    .map((member) => member.user)
+    .filter((user): user is User => Boolean(user))
+
+  return [data.currentUser, ...memberUsers].find((user) => user.id === userId)
+}
 
 const contains = (value: string | null | undefined, search: string) =>
   (value ?? '').toLowerCase().includes(search.toLowerCase())
