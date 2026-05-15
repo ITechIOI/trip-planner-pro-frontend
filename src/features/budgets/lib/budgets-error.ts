@@ -8,7 +8,7 @@ import type {
   QueryTripBudgetsQueryError,
   UpdateBudgetMutationError,
 } from "@/shared";
-import { getApiErrorMessage } from "@/features/shared/lib";
+import { getApiErrorMessage } from "@/shared/api";
 
 type BudgetsApiError =
   | CreateBudgetMutationError

@@ -1,6 +1,6 @@
 // src/shared/http/custom-instance.ts
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
-import { getAccessToken } from "./auth-token";
+import { getValidAccessToken } from "./auth-token";
 
 declare const __API_BASE_URL__: string | undefined;
 
@@ -13,16 +13,24 @@ export const AXIOS_INSTANCE = axios.create({
   withCredentials: false,
 });
 
+const PUBLIC_AUTH_PATHS = new Set([
+  "/api/v1/auth/login",
+  "/api/v1/auth/register",
+  "/api/v1/auth/password/reset",
+]);
+
 const createRequestId = () =>
   globalThis.crypto?.randomUUID?.() ??
   `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 AXIOS_INSTANCE.interceptors.request.use((config) => {
-  const accessToken = getAccessToken();
+  const accessToken = getValidAccessToken();
+const requestUrl = config.url ?? "";
+  const isPublicAuthRequest = PUBLIC_AUTH_PATHS.has(requestUrl);
 
   config.headers["X-Request-Id"] = createRequestId();
 
-  if (accessToken && !config.headers.Authorization) {
+  if (accessToken && !config.headers.Authorization && !isPublicAuthRequest) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
 

@@ -4,7 +4,7 @@ import type {
   ListTripMembersQueryError,
   UpdateTripMemberRoleMutationError,
 } from "@/shared";
-import { getApiErrorMessage } from "@/features/shared/lib";
+import { getApiErrorMessage } from "@/shared/api";
 
 type TripMembersApiError =
   | AddTripMemberMutationError

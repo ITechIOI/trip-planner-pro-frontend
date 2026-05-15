@@ -47,7 +47,7 @@ import { withDefaultQueryOptions } from '../../../query-options';
 
 
 /**
- * @summary List trip members
+ * @summary List trip members with user details
  */
 export const listTripMembers = (
     tripId: number,
@@ -125,7 +125,7 @@ export function useListTripMembers<TData = Awaited<ReturnType<typeof listTripMem
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List trip members
+ * @summary List trip members with user details
  */
 
 export function useListTripMembers<TData = Awaited<ReturnType<typeof listTripMembers>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>>(
@@ -143,7 +143,7 @@ export function useListTripMembers<TData = Awaited<ReturnType<typeof listTripMem
 
 
 /**
- * @summary List trip members
+ * @summary List trip members with user details
  */
 export const invalidateListTripMembers = async (
  queryClient: QueryClient, tripId: number,
@@ -156,7 +156,7 @@ export const invalidateListTripMembers = async (
 }
 
 /**
- * @summary List trip members
+ * @summary List trip members with user details
  */
 export const useSetListTripMembersQueryData = () => {
   const queryClient = useQueryClient();
@@ -167,7 +167,7 @@ export const useSetListTripMembersQueryData = () => {
 }
 
 /**
- * @summary List trip members
+ * @summary List trip members with user details
  */
 export const useGetListTripMembersQueryData = () => {
   const queryClient = useQueryClient();

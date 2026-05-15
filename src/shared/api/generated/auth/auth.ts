@@ -21,6 +21,7 @@ import type {
   CreateUserRequest,
   LoginRequest,
   LoginResponse,
+  ResetPasswordByEmailRequest,
   UnauthorizedResponse
 } from '../model';
 
@@ -155,4 +156,68 @@ export const useLogin = <TError = ErrorType<BadRequestResponse | UnauthorizedRes
         TContext
       > => {
       return useMutation(getLoginMutationOptions(options), queryClient);
+    }
+    /**
+ * Public password reset endpoint. This endpoint intentionally does not require JWT, OTP, reset token, or email verification.
+ * @summary Reset password by email without authentication
+ */
+export const resetPasswordByEmail = (
+    resetPasswordByEmailRequest: BodyType<ResetPasswordByEmailRequest>,
+ signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/auth/password/reset`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: resetPasswordByEmailRequest, signal
+    },
+      );
+    }
+
+
+
+export const getResetPasswordByEmailMutationOptions = <TError = ErrorType<BadRequestResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPasswordByEmail>>, TError,{data: BodyType<ResetPasswordByEmailRequest>}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof resetPasswordByEmail>>, TError,{data: BodyType<ResetPasswordByEmailRequest>}, TContext> => {
+
+const mutationKey = ['resetPasswordByEmail'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetPasswordByEmail>>, {data: BodyType<ResetPasswordByEmailRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  resetPasswordByEmail(data,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetPasswordByEmailMutationResult = NonNullable<Awaited<ReturnType<typeof resetPasswordByEmail>>>
+    export type ResetPasswordByEmailMutationBody = BodyType<ResetPasswordByEmailRequest>
+    export type ResetPasswordByEmailMutationError = ErrorType<BadRequestResponse>
+
+    /**
+ * @summary Reset password by email without authentication
+ */
+export const useResetPasswordByEmail = <TError = ErrorType<BadRequestResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetPasswordByEmail>>, TError,{data: BodyType<ResetPasswordByEmailRequest>}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resetPasswordByEmail>>,
+        TError,
+        {data: BodyType<ResetPasswordByEmailRequest>},
+        TContext
+      > => {
+      return useMutation(getResetPasswordByEmailMutationOptions(options), queryClient);
     }

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { invalidateFeatureQueries } from '@/features/shared/lib'
+import { invalidateFeatureQueries } from '@/shared/lib'
 import {
   useCreateItinerary,
   useDeleteItinerary,

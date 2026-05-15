@@ -15,7 +15,9 @@ export interface UpdateUserRequest {
      */
   email?: string | null;
   /**
-     * @maxLength 200
+     * Deprecated. Use PATCH /api/v1/users/me/avatar to upload avatar images.
+     * @deprecated
+     * @maxLength 1024
      * @nullable
      */
   avatarUrl?: string | null;

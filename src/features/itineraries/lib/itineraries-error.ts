@@ -7,7 +7,7 @@ import type {
   QueryTripItinerariesQueryError,
   UpdateItineraryMutationError,
 } from "@/shared";
-import { getApiErrorMessage } from "@/features/shared/lib";
+import { getApiErrorMessage } from "@/shared/api";
 
 type ItinerariesApiError =
   | CreateItineraryMutationError

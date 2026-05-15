@@ -9,11 +9,14 @@ import type { PackedStatus } from './packedStatus';
 import type { PackingCategory } from './packingCategory';
 import type { RequiredStatus } from './requiredStatus';
 
+/**
+ * Partial update. Omitted fields are unchanged. Explicit null is rejected for all fields.
+ */
 export interface UpdatePackingChecklistRequest {
   /** @maxLength 200 */
-  name: string;
+  name?: string;
   /** @minimum 0 */
-  quantity: number;
+  quantity?: number;
   category?: PackingCategory;
   requiredStatus?: RequiredStatus;
   packedStatus?: PackedStatus;

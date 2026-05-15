@@ -9,6 +9,8 @@
 export interface CreateUserRequest {
   /** @maxLength 200 */
   fullName: string;
+  /** @maxLength 200 */
+  email: string;
   /** @maxLength 100 */
   username: string;
   /**

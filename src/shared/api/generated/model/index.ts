@@ -7,6 +7,7 @@
  */
 
 export * from './addTripMemberRequest';
+export * from './badGatewayResponse';
 export * from './badRequestResponse';
 export * from './budgetCategory';
 export * from './budgetCategoryFilterParameter';
@@ -54,6 +55,7 @@ export * from './packingChecklistPageResponse';
 export * from './packingChecklistResponse';
 export * from './packingProgressResponse';
 export * from './pageResponseBase';
+export * from './payloadTooLargeResponse';
 export * from './paymentStatus';
 export * from './paymentStatusFilterParameter';
 export * from './queryTripBudgetsParams';
@@ -61,6 +63,7 @@ export * from './queryTripItinerariesParams';
 export * from './queryTripPackingChecklistsParams';
 export * from './queryTripsParams';
 export * from './requiredStatus';
+export * from './resetPasswordByEmailRequest';
 export * from './searchFilterParameter';
 export * from './tripDashboardResponse';
 export * from './tripEndDateFilterParameter';
@@ -79,4 +82,5 @@ export * from './updatePasswordRequest';
 export * from './updateTripMemberRoleRequest';
 export * from './updateTripRequest';
 export * from './updateUserRequest';
+export * from './uploadCurrentUserAvatarBody';
 export * from './userResponse';

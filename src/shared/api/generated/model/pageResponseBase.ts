@@ -12,7 +12,7 @@ export interface PageResponseBase {
   offset: number;
   /**
      * @minimum 1
-     * @maximum 100
+     * @maximum 50
      */
   limit: number;
   /** @minimum 0 */
