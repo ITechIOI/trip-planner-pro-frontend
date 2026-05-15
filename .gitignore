@@ -33,7 +33,6 @@ $RECYCLE.BIN/
 *.orig
 .playwright-mcp/
 airbnb/
-docs/ai/design/
 
 # Editor directories and files
 .vscode/*
@@ -47,11 +46,3 @@ docs/ai/design/
 *.njsproj
 *.sln
 *.sw?
-
-requirements.md
-AGENTS.md
-DESIGN.md
-
-.env
-.env.*
-!.env.example
