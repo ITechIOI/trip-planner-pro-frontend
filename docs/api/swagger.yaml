@@ -1,0 +1,1806 @@
+openapi: 3.0.3
+info:
+  title: Trip Planner Pro Backend API
+  version: 1.0.0
+  description: REST API documentation for Trip Planner Pro backend.
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Trips
+  - name: Trip Members
+  - name: Itineraries
+  - name: Packing Checklists
+  - name: Budgets
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a user
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Registered and authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with username and password
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/password/reset:
+    patch:
+      tags: [Auth]
+      summary: Reset password by email without authentication
+      description: Public password reset endpoint. This endpoint intentionally does not require JWT, OTP, reset token, or email verification.
+      operationId: resetPasswordByEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordByEmailRequest'
+      responses:
+        '204':
+          description: Password reset request processed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/users/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [Users]
+      summary: Soft delete current user
+      operationId: deleteCurrentUser
+      responses:
+        '204':
+          description: User soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/me/avatar:
+    patch:
+      tags: [Users]
+      summary: Upload current user avatar
+      operationId: uploadCurrentUserAvatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: JPEG, PNG, or WebP image up to 5MB.
+      responses:
+        '200':
+          description: Updated user with uploaded avatar URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /api/v1/users/me/profile:
+    patch:
+      tags: [Users]
+      summary: Update current user profile
+      operationId: updateCurrentUserProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/me/password:
+    patch:
+      tags: [Users]
+      summary: Update current user password
+      operationId: updateCurrentUserPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
+      responses:
+        '204':
+          description: Password updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users]
+      summary: Get user profile by id
+      operationId: getUserById
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips:
+    post:
+      tags: [Trips]
+      summary: Create a trip
+      operationId: createTrip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '201':
+          description: Created trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [Trips]
+      summary: List current user's trips
+      operationId: listTrips
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated trips
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/trips/query:
+    get:
+      tags: [Trips]
+      summary: Query current user's trips
+      operationId: queryTrips
+      parameters:
+        - $ref: '#/components/parameters/TripStatusFilter'
+        - $ref: '#/components/parameters/TripStartDateFilter'
+        - $ref: '#/components/parameters/TripEndDateFilter'
+        - $ref: '#/components/parameters/SearchFilter'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated trips matching query filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/trips/{tripId}:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Trips]
+      summary: Get a trip
+      operationId: getTrip
+      responses:
+        '200':
+          description: Trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Trips]
+      summary: Update a trip
+      operationId: updateTrip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripRequest'
+      responses:
+        '200':
+          description: Updated trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Trips]
+      summary: Soft delete a trip
+      operationId: deleteTrip
+      responses:
+        '204':
+          description: Trip soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/dashboard:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Trips]
+      summary: Get trip dashboard
+      operationId: getTripDashboard
+      responses:
+        '200':
+          description: Derived trip dashboard with progress and budget usage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripDashboardResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/members:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Trip Members]
+      summary: List trip members with user details
+      operationId: listTripMembers
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated trip members
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripMemberPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Trip Members]
+      summary: Add or reactivate a trip member by email
+      operationId: addTripMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTripMemberRequest'
+      responses:
+        '201':
+          description: Added member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripMemberResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/trips/{tripId}/members/{memberId}:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/MemberId'
+    patch:
+      tags: [Trip Members]
+      summary: Update trip member role
+      operationId: updateTripMemberRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripMemberRoleRequest'
+      responses:
+        '200':
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripMemberResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Trip Members]
+      summary: Soft delete a trip member
+      operationId: deleteTripMember
+      responses:
+        '204':
+          description: Member soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/itineraries:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Itineraries]
+      summary: List trip itineraries
+      operationId: listTripItineraries
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated itineraries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Itineraries]
+      summary: Create an itinerary
+      operationId: createItinerary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItineraryRequest'
+      responses:
+        '201':
+          description: Created itinerary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/itineraries/query:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Itineraries]
+      summary: Query trip itineraries
+      operationId: queryTripItineraries
+      parameters:
+        - $ref: '#/components/parameters/ItineraryStartTimeFilter'
+        - $ref: '#/components/parameters/ItineraryEndTimeFilter'
+        - $ref: '#/components/parameters/ItineraryCategoryFilter'
+        - $ref: '#/components/parameters/ItineraryStatusFilter'
+        - $ref: '#/components/parameters/ItineraryPriorityFilter'
+        - $ref: '#/components/parameters/SearchFilter'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated itineraries matching query filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/itineraries/{itineraryId}:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/ItineraryId'
+    get:
+      tags: [Itineraries]
+      summary: Get a trip itinerary
+      operationId: getTripItinerary
+      responses:
+        '200':
+          description: Itinerary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Itineraries]
+      summary: Update an itinerary
+      operationId: updateItinerary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItineraryRequest'
+      responses:
+        '200':
+          description: Updated itinerary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Itineraries]
+      summary: Soft delete an itinerary
+      operationId: deleteItinerary
+      responses:
+        '204':
+          description: Itinerary soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/itineraries/{itineraryId}:
+    parameters:
+      - $ref: '#/components/parameters/ItineraryId'
+    get:
+      tags: [Itineraries]
+      summary: Get an itinerary by id
+      operationId: getItinerary
+      responses:
+        '200':
+          description: Itinerary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/packing-checklists:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Packing Checklists]
+      summary: List trip packing checklists
+      operationId: listTripPackingChecklists
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated packing checklists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Packing Checklists]
+      summary: Create a packing checklist item
+      operationId: createPackingChecklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePackingChecklistRequest'
+      responses:
+        '201':
+          description: Created packing checklist item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/packing-checklists/query:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Packing Checklists]
+      summary: Query trip packing checklists
+      operationId: queryTripPackingChecklists
+      parameters:
+        - $ref: '#/components/parameters/PackingCategoryFilter'
+        - $ref: '#/components/parameters/PackedStatusFilter'
+        - $ref: '#/components/parameters/SearchFilter'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated packing checklists matching query filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/packing-checklists/{checklistId}:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/ChecklistId'
+    get:
+      tags: [Packing Checklists]
+      summary: Get a trip packing checklist item
+      operationId: getTripPackingChecklist
+      responses:
+        '200':
+          description: Packing checklist item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Packing Checklists]
+      summary: Update a packing checklist item
+      operationId: updatePackingChecklist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePackingChecklistRequest'
+      responses:
+        '200':
+          description: Updated packing checklist item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Packing Checklists]
+      summary: Soft delete a packing checklist item
+      operationId: deletePackingChecklist
+      responses:
+        '204':
+          description: Packing checklist item soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packing-checklists/{checklistId}:
+    parameters:
+      - $ref: '#/components/parameters/ChecklistId'
+    get:
+      tags: [Packing Checklists]
+      summary: Get a packing checklist item by id
+      operationId: getPackingChecklist
+      responses:
+        '200':
+          description: Packing checklist item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingChecklistResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/budgets:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Budgets]
+      summary: List trip budgets
+      operationId: listTripBudgets
+      parameters:
+        - $ref: '#/components/parameters/BudgetCategoryFilter'
+        - $ref: '#/components/parameters/PaymentStatusFilter'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated budgets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    post:
+      tags: [Budgets]
+      summary: Create a budget item
+      operationId: createBudget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBudgetRequest'
+      responses:
+        '201':
+          description: Created budget
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/budgets/query:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Budgets]
+      summary: Query trip budgets
+      operationId: queryTripBudgets
+      parameters:
+        - $ref: '#/components/parameters/BudgetCategoryFilter'
+        - $ref: '#/components/parameters/PaymentStatusFilter'
+        - $ref: '#/components/parameters/SearchFilter'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Paginated budgets matching query filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/budgets/summary:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+    get:
+      tags: [Budgets]
+      summary: Get trip budget summary
+      operationId: getTripBudgetSummary
+      responses:
+        '200':
+          description: Derived budget totals, category totals, remaining budget, and warning level
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/budgets/{budgetId}:
+    parameters:
+      - $ref: '#/components/parameters/TripId'
+      - $ref: '#/components/parameters/BudgetId'
+    get:
+      tags: [Budgets]
+      summary: Get a trip budget
+      operationId: getTripBudget
+      responses:
+        '200':
+          description: Budget
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Budgets]
+      summary: Update a budget
+      operationId: updateBudget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBudgetRequest'
+      responses:
+        '200':
+          description: Updated budget
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Budgets]
+      summary: Soft delete a budget
+      operationId: deleteBudget
+      responses:
+        '204':
+          description: Budget soft deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/budgets/{budgetId}:
+    parameters:
+      - $ref: '#/components/parameters/BudgetId'
+    get:
+      tags: [Budgets]
+      summary: Get a budget by id
+      operationId: getBudget
+      responses:
+        '200':
+          description: Budget
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    TripId:
+      name: tripId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    ItineraryId:
+      name: itineraryId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    ChecklistId:
+      name: checklistId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    BudgetId:
+      name: budgetId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int32
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+    SearchFilter:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Case-insensitive and accent-insensitive LIKE search text.
+    TripStatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [done, in progress, to do]
+      description: Derived from trip endDate using Asia/Ho_Chi_Minh current time.
+    TripStartDateFilter:
+      name: startDate
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filters trips with startDate greater than or equal to this value.
+    TripEndDateFilter:
+      name: endDate
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filters trips with endDate less than or equal to this value.
+    ItineraryStartTimeFilter:
+      name: startTime
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filters itineraries with startTime greater than or equal to this value.
+    ItineraryEndTimeFilter:
+      name: endTime
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filters itineraries with endTime less than or equal to this value.
+    ItineraryCategoryFilter:
+      name: category
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ItineraryCategory'
+    ItineraryStatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ItineraryStatus'
+    ItineraryPriorityFilter:
+      name: priority
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ItineraryPriority'
+    PackingCategoryFilter:
+      name: category
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/PackingCategory'
+    PackedStatusFilter:
+      name: packedStatus
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/PackedStatus'
+    BudgetCategoryFilter:
+      name: category
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/BudgetCategory'
+    PaymentStatusFilter:
+      name: paymentStatus
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/PaymentStatus'
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing, invalid, or expired JWT; or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated user does not have access to this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    PayloadTooLarge:
+      description: Uploaded payload is too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadGateway:
+      description: Upstream provider failure
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    CreateUserRequest:
+      type: object
+      required: [fullName, email, username, password]
+      properties:
+        fullName:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        username:
+          type: string
+          maxLength: 100
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    ResetPasswordByEmailRequest:
+      type: object
+      required: [email, newPassword]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        fullName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        username:
+          type: string
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          nullable: true
+        avatarUrl:
+          type: string
+          maxLength: 1024
+          nullable: true
+          deprecated: true
+          description: Deprecated. Use PATCH /api/v1/users/me/avatar to upload avatar images.
+        phone:
+          type: string
+          maxLength: 30
+          nullable: true
+
+    UpdatePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+
+    CreateTripRequest:
+      type: object
+      required: [name, estimatedBudget]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        estimatedBudget:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    UpdateTripRequest:
+      type: object
+      description: Partial update. Omitted fields are unchanged. Explicit null clears nullable date fields only; name and estimatedBudget must not be null when present.
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        estimatedBudget:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    TripResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        estimatedBudget:
+          type: number
+        ownerId:
+          type: integer
+          format: int32
+        startDate:
+          type: string
+          format: date-time
+          nullable: true
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    TripPageResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageResponseBase'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/TripResponse'
+
+    TripDashboardResponse:
+      type: object
+      properties:
+        tripId:
+          type: integer
+          format: int32
+        tripName:
+          type: string
+        itinerariesByDate:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItineraryDateGroupResponse'
+        itineraryProgress:
+          $ref: '#/components/schemas/ItineraryProgressResponse'
+        packingProgress:
+          $ref: '#/components/schemas/PackingProgressResponse'
+        budgetUsage:
+          $ref: '#/components/schemas/BudgetUsageResponse'
+        unpaidBudgetItemCount:
+          type: integer
+          format: int64
+        overdueActivityCount:
+          type: integer
+          format: int64
+
+    ItineraryDateGroupResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItineraryResponse'
+
+    ItineraryProgressResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        done:
+          type: integer
+          format: int64
+        percent:
+          type: number
+
+    PackingProgressResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        packed:
+          type: integer
+          format: int64
+        percent:
+          type: number
+
+    BudgetUsageResponse:
+      type: object
+      properties:
+        initialBudget:
+          type: number
+        totalActualCost:
+          type: number
+        percent:
+          type: number
+        warningLevel:
+          $ref: '#/components/schemas/BudgetWarningLevel'
+
+    TripMemberRole:
+      type: string
+      enum: [VIEW, EDIT]
+
+    AddTripMemberRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 200
+        role:
+          $ref: '#/components/schemas/TripMemberRole'
+
+    UpdateTripMemberRoleRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/TripMemberRole'
+
+    TripMemberResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        userId:
+          type: integer
+          format: int32
+        tripId:
+          type: integer
+          format: int32
+        role:
+          $ref: '#/components/schemas/TripMemberRole'
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    TripMemberPageResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageResponseBase'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/TripMemberResponse'
+
+    ItineraryCategory:
+      type: string
+      enum: [TRANSPORT, FOOD, SIGHTSEEING, SHOPPING, HOTEL, OTHER]
+    ItineraryPriority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+    ItineraryStatus:
+      type: string
+      enum: [PLANNED, IN_PROGRESS, DONE]
+
+    CreateItineraryRequest:
+      type: object
+      required: [activityTitle]
+      properties:
+        activityTitle:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          $ref: '#/components/schemas/ItineraryCategory'
+        priority:
+          $ref: '#/components/schemas/ItineraryPriority'
+        status:
+          $ref: '#/components/schemas/ItineraryStatus'
+
+    UpdateItineraryRequest:
+      type: object
+      description: Partial update. Omitted fields are unchanged. Explicit null clears location, startTime, and endTime only; activityTitle, category, priority, and status must not be null when present.
+      properties:
+        activityTitle:
+          type: string
+          maxLength: 200
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          $ref: '#/components/schemas/ItineraryCategory'
+        priority:
+          $ref: '#/components/schemas/ItineraryPriority'
+        status:
+          $ref: '#/components/schemas/ItineraryStatus'
+
+    ItineraryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        activityTitle:
+          type: string
+        location:
+          type: string
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          nullable: true
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          $ref: '#/components/schemas/ItineraryCategory'
+        priority:
+          $ref: '#/components/schemas/ItineraryPriority'
+        status:
+          $ref: '#/components/schemas/ItineraryStatus'
+        tripId:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ItineraryPageResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageResponseBase'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ItineraryResponse'
+
+    PackingCategory:
+      type: string
+      enum: [CLOTHES, DOCUMENTS, ELECTRONICS, MEDICINE, PERSONAL, OTHER]
+    RequiredStatus:
+      type: string
+      enum: [REQUIRED, OPTIONAL]
+    PackedStatus:
+      type: string
+      enum: [NOT_PACKED, PACKED]
+
+    CreatePackingChecklistRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        quantity:
+          type: integer
+          minimum: 0
+          default: 1
+        category:
+          $ref: '#/components/schemas/PackingCategory'
+        requiredStatus:
+          $ref: '#/components/schemas/RequiredStatus'
+        packedStatus:
+          $ref: '#/components/schemas/PackedStatus'
+
+    UpdatePackingChecklistRequest:
+      type: object
+      description: Partial update. Omitted fields are unchanged. Explicit null is rejected for all fields.
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        quantity:
+          type: integer
+          minimum: 0
+        category:
+          $ref: '#/components/schemas/PackingCategory'
+        requiredStatus:
+          $ref: '#/components/schemas/RequiredStatus'
+        packedStatus:
+          $ref: '#/components/schemas/PackedStatus'
+
+    PackingChecklistResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        quantity:
+          type: integer
+        category:
+          $ref: '#/components/schemas/PackingCategory'
+        requiredStatus:
+          $ref: '#/components/schemas/RequiredStatus'
+        packedStatus:
+          $ref: '#/components/schemas/PackedStatus'
+        tripId:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PackingChecklistPageResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageResponseBase'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/PackingChecklistResponse'
+
+    BudgetCategory:
+      type: string
+      enum: [TRANSPORT, ACCOMMODATION, FOOD, SHOPPING, ACTIVITY, OTHER]
+    PaymentStatus:
+      type: string
+      enum: [UNPAID, PAID]
+
+    CreateBudgetRequest:
+      type: object
+      required: [itemName]
+      properties:
+        itemName:
+          type: string
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/BudgetCategory'
+        estimatedCost:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          default: 0
+        actualCost:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          nullable: true
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+      description: When paymentStatus is PAID, actualCost must not be null.
+
+    UpdateBudgetRequest:
+      type: object
+      description: Partial update. Omitted fields are unchanged. Explicit null clears actualCost only; itemName, category, estimatedCost, and paymentStatus must not be null when present. Final state must include actualCost when paymentStatus is PAID.
+      properties:
+        itemName:
+          type: string
+          maxLength: 200
+        category:
+          $ref: '#/components/schemas/BudgetCategory'
+        estimatedCost:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+        actualCost:
+          type: number
+          minimum: 0
+          multipleOf: 0.01
+          nullable: true
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+
+    BudgetResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        itemName:
+          type: string
+        category:
+          $ref: '#/components/schemas/BudgetCategory'
+        estimatedCost:
+          type: number
+        actualCost:
+          type: number
+          nullable: true
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+        tripId:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    BudgetPageResponse:
+      allOf:
+        - $ref: '#/components/schemas/PageResponseBase'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/BudgetResponse'
+
+    BudgetWarningLevel:
+      type: string
+      enum: [SAFE, WARNING, CRITICAL]
+
+    BudgetCategorySummaryResponse:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/BudgetCategory'
+        itemCount:
+          type: integer
+          format: int64
+        totalEstimatedCost:
+          type: number
+        totalActualCost:
+          type: number
+
+    BudgetSummaryResponse:
+      type: object
+      properties:
+        tripId:
+          type: integer
+          format: int32
+        initialBudget:
+          type: number
+        totalEstimatedCost:
+          type: number
+        totalActualCost:
+          type: number
+        remainingBudget:
+          type: number
+        actualMinusEstimatedCost:
+          type: number
+        budgetUsagePercent:
+          type: number
+        warningLevel:
+          $ref: '#/components/schemas/BudgetWarningLevel'
+        categorySummaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetCategorySummaryResponse'
+
+    PageResponseBase:
+      type: object
+      required: [items, offset, limit, total]
+      properties:
+        items:
+          type: array
+          items: {}
+        offset:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+
+security:
+  - bearerAuth: []
