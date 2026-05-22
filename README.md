@@ -1,1 +1,0 @@
-# trip-planner-pro-frontend
