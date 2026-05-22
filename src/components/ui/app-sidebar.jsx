@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useTrip } from '@/lib/local-trip-context'
+import { useTrip } from '@/lib/trip-context'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,

@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
-import { useTrip } from '@/lib/local-trip-context'
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useTrip } from '@/lib/trip-context'
+import {
+  parseIsoToFormFields,
+  toItineraryEnum,
+  ITINERARY_CATEGORIES,
+  ITINERARY_PRIORITIES,
+  ITINERARY_STATUSES,
+} from '@/lib/itinerary-mappers'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -10,35 +17,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
-
-const categories = ['TRANSPORT', 'FOOD', 'SIGHTSEEING', 'SHOPPING', 'HOTEL', 'OTHER']
-const priorities = ['LOW', 'MEDIUM', 'HIGH']
-const statuses = ['PLANNED', 'IN_PROGRESS', 'DONE']
-
-function parseIsoToFormFields(isoString) {
-  if (!isoString) return { date: '', time: '' }
-  const d = new Date(isoString)
-  const pad = (n) => String(n).padStart(2, '0')
-  return {
-    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-  }
-}
+const categories = ITINERARY_CATEGORIES
+const priorities = ITINERARY_PRIORITIES
+const statuses = ITINERARY_STATUSES
 
 export function ItineraryForm({ open, onOpenChange, editItem }) {
-  const { state, dispatch } = useTrip();
-  const isEditing = !!editItem;
-  
+  const {
+    state,
+    addActivity,
+    updateActivity,
+    itineraryLoading,
+    itineraryError,
+    clearItineraryError,
+  } = useTrip()
+  const isEditing = !!editItem
+
   const [formData, setFormData] = useState({
     activityTitle: '',
     location: '',
@@ -47,13 +50,17 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
     endTime: '',
     category: 'SIGHTSEEING',
     priority: 'MEDIUM',
-    status: 'PLANNED'
-  });
-  
-  const [errors, setErrors] = useState({});
-  
+    status: 'PLANNED',
+  })
+
+  const [errors, setErrors] = useState({})
+  const [submitError, setSubmitError] = useState(null)
+
   useEffect(() => {
     if (!open) return
+
+    clearItineraryError()
+    setSubmitError(null)
 
     if (editItem) {
       const start = parseIsoToFormFields(editItem.startTime)
@@ -64,10 +71,14 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
         date: start.date,
         startTime: start.time,
         endTime: end.time,
-        category: editItem.category || 'SIGHTSEEING',
-        priority: editItem.priority || 'MEDIUM',
-        status: editItem.status || 'PLANNED'
-      });
+        category: toItineraryEnum(
+          editItem.category,
+          categories,
+          'SIGHTSEEING',
+        ),
+        priority: toItineraryEnum(editItem.priority, priorities, 'MEDIUM'),
+        status: toItineraryEnum(editItem.status, statuses, 'PLANNED'),
+      })
     } else {
       setFormData({
         activityTitle: '',
@@ -77,110 +88,113 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
         endTime: '',
         category: 'SIGHTSEEING',
         priority: 'MEDIUM',
-        status: 'PLANNED'
-      });
+        status: 'PLANNED',
+      })
     }
-    setErrors({});
-  }, [editItem, state.trip.startDate, open]);
-  
+    setErrors({})
+  }, [editItem, state.trip.startDate, open, clearItineraryError])
+
   const validate = () => {
     const newErrors = {}
-    
+
     if (!formData.activityTitle.trim()) {
-      newErrors.activityTitle = 'Activity title is required';
+      newErrors.activityTitle = 'Activity title is required'
     }
     if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
+      newErrors.location = 'Location is required'
     }
     if (!formData.date) {
-      newErrors.date = 'Date is required';
-    }
-    if (formData.endTime && formData.startTime && formData.endTime <= formData.startTime) {
-      newErrors.endTime = 'End time must be after start time';
+      newErrors.date = 'Date is required'
     }
     if (!formData.startTime) {
-      newErrors.startTime = 'Start time is required';
+      newErrors.startTime = 'Start time is required'
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!validate()) return;
+    if (
+      formData.endTime &&
+      formData.startTime &&
+      formData.endTime <= formData.startTime
+    ) {
+      newErrors.endTime = 'End time must be after start time'
+    }
 
-    const isoStartTime = new Date(`${formData.date}T${formData.startTime}:00`).toISOString();
-    const isoEndTime = formData.endTime ? new Date(`${formData.date}T${formData.endTime}:00`).toISOString() : null;
-    
-    const payload = {
-      activityTitle: formData.activityTitle.trim(),
-      location: formData.location.trim(),
-      startTime: isoStartTime,
-      endTime: isoEndTime,
-      category: formData.category,
-      priority: formData.priority,
-      status: formData.status,
-    };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
-    if (isEditing && editItem) {
-      dispatch({
-        type: 'UPDATE_ITINERARY',
-        payload: { ...payload, id: editItem.id }
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitError(null)
+
+    if (!validate()) return
+
+    const result = isEditing
+      ? await updateActivity(editItem.id, formData)
+      : await addActivity(formData)
+
+    if (result.success) {
+      onOpenChange(false)
     } else {
-      const newId = Math.max(0, ...state.trip.itinerary.map(i => i.id)) + 1;
-      dispatch({
-        type: 'ADD_ITINERARY',
-        payload: { ...payload, id: newId }
-      });
+      setSubmitError(result.error)
     }
-    
-    onOpenChange(false);
-  };
-  
+  }
+
+  const displayError = submitError || itineraryError
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Activity' : 'Add New Activity'}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? 'Edit Activity' : 'Add New Activity'}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update the details of your activity.' : 'Add a new activity to your itinerary.'}
+            {isEditing
+              ? 'Update the details of your activity.'
+              : 'Add a new activity to your itinerary.'}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
+          {displayError && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {displayError}
+            </p>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="activityTitle">Activity Title *</Label>
             <Input
               id="activityTitle"
               value={formData.activityTitle}
-              onChange={(e) => setFormData({ ...formData, activityTitle: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, activityTitle: e.target.value })
+              }
               placeholder="e.g., Visit Marble Mountains"
-              className={cn(errors.activityTitle && "border-destructive")}
+              className={cn(errors.activityTitle && 'border-destructive')}
+              disabled={itineraryLoading}
             />
             {errors.activityTitle && (
               <p className="text-sm text-destructive">{errors.activityTitle}</p>
             )}
           </div>
-          
-          {/* Location */}
+
           <div className="space-y-2">
             <Label htmlFor="location">Location *</Label>
             <Input
               id="location"
               value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
               placeholder="e.g., Marble Mountains, Ngu Hanh Son"
-              className={cn(errors.location && "border-destructive")}
+              className={cn(errors.location && 'border-destructive')}
+              disabled={itineraryLoading}
             />
             {errors.location && (
               <p className="text-sm text-destructive">{errors.location}</p>
             )}
           </div>
-          
-          {/* Date & Time */}
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date *</Label>
@@ -188,8 +202,11 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
                 id="date"
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className={cn(errors.date && "border-destructive")}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+                className={cn(errors.date && 'border-destructive')}
+                disabled={itineraryLoading}
               />
               {errors.date && (
                 <p className="text-sm text-destructive">{errors.date}</p>
@@ -203,8 +220,11 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
                   id="startTime"
                   type="time"
                   value={formData.startTime}
-                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                  className={cn(errors.startTime && "border-destructive")}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startTime: e.target.value })
+                  }
+                  className={cn(errors.startTime && 'border-destructive')}
+                  disabled={itineraryLoading}
                 />
                 {errors.startTime && (
                   <p className="text-sm text-destructive">{errors.startTime}</p>
@@ -217,8 +237,11 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
                   id="endTime"
                   type="time"
                   value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  className={cn(errors.endTime && "border-destructive")}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endTime: e.target.value })
+                  }
+                  className={cn(errors.endTime && 'border-destructive')}
+                  disabled={itineraryLoading}
                 />
                 {errors.endTime && (
                   <p className="text-sm text-destructive">{errors.endTime}</p>
@@ -226,79 +249,95 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
               </div>
             </div>
           </div>
-          
-          {/* Category & Priority */}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Category</Label>
-              <Select 
-                value={formData.category} 
+              <Select
+                value={formData.category}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, category: value})
+                  setFormData({ ...formData, category: value })
                 }
+                disabled={itineraryLoading}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Priority</Label>
-              <Select 
-                value={formData.priority} 
+              <Select
+                value={formData.priority}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, priority: value})
+                  setFormData({ ...formData, priority: value })
                 }
+                disabled={itineraryLoading}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {priorities.map((pri) => (
-                    <SelectItem key={pri} value={pri}>{pri}</SelectItem>
+                    <SelectItem key={pri} value={pri}>
+                      {pri}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
-          {/* Status (only for editing) */}
+
           {isEditing && (
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select 
-                value={formData.status} 
+              <Select
+                value={formData.status}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, status: value})
+                  setFormData({ ...formData, status: value })
                 }
+                disabled={itineraryLoading}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {statuses.map((status) => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
-          
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={itineraryLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit">
-              {isEditing ? 'Save Changes' : 'Add Activity'}
+            <Button type="submit" disabled={itineraryLoading}>
+              {itineraryLoading
+                ? 'Saving...'
+                : isEditing
+                  ? 'Save Changes'
+                  : 'Add Activity'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

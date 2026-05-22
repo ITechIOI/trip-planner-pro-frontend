@@ -1,5 +1,5 @@
 import { Bell, Search, User, Calendar, MapPin, AlertTriangle, AlertCircle, X } from 'lucide-react';
-import { useTrip } from '@/lib/local-trip-context';
+import { useTrip } from '@/lib/trip-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

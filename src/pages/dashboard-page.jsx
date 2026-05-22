@@ -1,5 +1,5 @@
 import { AppLayout } from '@/components/ui/app-layout'
-import { useTrip } from '@/lib/local-trip-context'
+import { useTrip } from '@/lib/trip-context'
 import { ProgressRing } from '@/components/dashboard/progress-ring'
 
 function DashboardContent() {

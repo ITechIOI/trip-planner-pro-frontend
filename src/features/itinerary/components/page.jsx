@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { AppLayout } from '@/components/ui/app-layout'
-import { useTrip } from '@/lib/local-trip-context'
+import { useTrip } from '@/lib/trip-context'
 import { ItineraryCard } from '@/features/itinerary/components/itinerary-card'
 import { ItineraryForm } from '@/features/itinerary/components/itinerary-form'
 import { EmptyState } from '@/components/ui/empty-state'

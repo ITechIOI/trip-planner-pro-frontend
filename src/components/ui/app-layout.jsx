@@ -1,6 +1,6 @@
 import { AppSidebar } from './app-sidebar'
 import { AppHeader } from './app-header'
-import { TripProvider } from '@/lib/local-trip-context'
+import { TripProvider } from '@/lib/trip-context'
 
 export function AppLayout({ children  }) {
   return (
