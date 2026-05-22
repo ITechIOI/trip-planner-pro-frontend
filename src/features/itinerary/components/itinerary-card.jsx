@@ -68,10 +68,17 @@ export function ItineraryCard({ item, onEdit }) {
   const itemDateTime = item.startTime ? new Date(item.startTime) : null;
   const isOverdue = item.status === 'PLANNED' && itemDateTime && itemDateTime < today;
   
-  const displayTime = item.startTime 
+
+  const startDisplay = item.startTime 
     ? item.startTime.split('T')[1]?.substring(0, 5) 
     : 'No time';
 
+  const endDisplay = item.endTime 
+    ? item.endTime.split('T')[1]?.substring(0, 5) 
+    : null;
+
+  const displayTime = startDisplay + (endDisplay ? ' - ' + endDisplay : '');
+  
   const handleStatusChange = (newStatus) => {
     dispatch({
       type: 'UPDATE_ITINERARY',

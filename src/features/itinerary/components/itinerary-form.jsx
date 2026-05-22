@@ -25,6 +25,16 @@ const categories = ['TRANSPORT', 'FOOD', 'SIGHTSEEING', 'SHOPPING', 'HOTEL', 'OT
 const priorities = ['LOW', 'MEDIUM', 'HIGH']
 const statuses = ['PLANNED', 'IN_PROGRESS', 'DONE']
 
+function parseIsoToFormFields(isoString) {
+  if (!isoString) return { date: '', time: '' }
+  const d = new Date(isoString)
+  const pad = (n) => String(n).padStart(2, '0')
+  return {
+    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  }
+}
+
 export function ItineraryForm({ open, onOpenChange, editItem }) {
   const { state, dispatch } = useTrip();
   const isEditing = !!editItem;
@@ -32,6 +42,7 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
   const [formData, setFormData] = useState({
     activityTitle: '',
     location: '',
+    date: '',
     startTime: '',
     endTime: '',
     category: 'SIGHTSEEING',
@@ -42,28 +53,28 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
   const [errors, setErrors] = useState({});
   
   useEffect(() => {
+    if (!open) return
+
     if (editItem) {
-      const [savedDate, savedTime] = editItem.startTime 
-      ? editItem.startTime.split('T') 
-      : ['', ''];
-      const [savedEndDate, savedEndTime] = editItem.endTime 
-      ? editItem.endTime.split('T') 
-      : ['', ''];
+      const start = parseIsoToFormFields(editItem.startTime)
+      const end = parseIsoToFormFields(editItem.endTime)
       setFormData({
-        activityTitle: editItem.activityTitle,
-        location: editItem.location,
-        startTime: editItem.startTime,
-        endTime: editItem.endTime,
-        category: editItem.category,
-        priority: editItem.priority,
-        status: editItem.status
+        activityTitle: editItem.activityTitle || '',
+        location: editItem.location || '',
+        date: start.date,
+        startTime: start.time,
+        endTime: end.time,
+        category: editItem.category || 'SIGHTSEEING',
+        priority: editItem.priority || 'MEDIUM',
+        status: editItem.status || 'PLANNED'
       });
     } else {
       setFormData({
         activityTitle: '',
         location: '',
-        startTime: state.trip.startDate || '',
-        endTime: state.trip.endDate || '',
+        date: state.trip.startDate || '',
+        startTime: '',
+        endTime: '',
         category: 'SIGHTSEEING',
         priority: 'MEDIUM',
         status: 'PLANNED'
@@ -84,6 +95,9 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
     if (!formData.date) {
       newErrors.date = 'Date is required';
     }
+    if (formData.endTime && formData.startTime && formData.endTime <= formData.startTime) {
+      newErrors.endTime = 'End time must be after start time';
+    }
     if (!formData.startTime) {
       newErrors.startTime = 'Start time is required';
     }
@@ -100,9 +114,13 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
     const isoEndTime = formData.endTime ? new Date(`${formData.date}T${formData.endTime}:00`).toISOString() : null;
     
     const payload = {
-      ...formData,
+      activityTitle: formData.activityTitle.trim(),
+      location: formData.location.trim(),
       startTime: isoStartTime,
-      endTime: isoEndTime
+      endTime: isoEndTime,
+      category: formData.category,
+      priority: formData.priority,
+      status: formData.status,
     };
 
     if (isEditing && editItem) {
@@ -163,7 +181,7 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
           </div>
           
           {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date *</Label>
               <Input
@@ -171,39 +189,41 @@ export function ItineraryForm({ open, onOpenChange, editItem }) {
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className={cn(errors.startTime && "border-destructive")}
+                className={cn(errors.date && "border-destructive")}
               />
-              {errors.startTime && (
+              {errors.date && (
                 <p className="text-sm text-destructive">{errors.date}</p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time *</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className={cn(errors.time && "border-destructive")}
-              />
-              {errors.time && (
-                <p className="text-sm text-destructive">{errors.time}</p>
-              )}
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startTime">Start Time *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className={cn(errors.startTime && "border-destructive")}
+                />
+                {errors.startTime && (
+                  <p className="text-sm text-destructive">{errors.startTime}</p>
+                )}
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={formData.endTime}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className={cn(errors.time && "border-destructive")}
-              />
-              {errors.time && (
-                <p className="text-sm text-destructive">{errors.time}</p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="endTime">End Time</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  className={cn(errors.endTime && "border-destructive")}
+                />
+                {errors.endTime && (
+                  <p className="text-sm text-destructive">{errors.endTime}</p>
+                )}
+              </div>
             </div>
           </div>
           
