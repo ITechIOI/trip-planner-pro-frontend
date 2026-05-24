@@ -33,6 +33,11 @@ $RECYCLE.BIN/
 *.orig
 .playwright-mcp/
 airbnb/
+docs/ai/
+docs/ui/
+ai/
+document/
+documents/
 
 # Editor directories and files
 .vscode/*
@@ -49,3 +54,8 @@ airbnb/
 .env
 .env.*
 !.env.example
+.gitignore
+
+AGENTS.md
+DESIGN.md
+requirements.md

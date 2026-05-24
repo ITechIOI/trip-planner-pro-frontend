@@ -1,6 +1,5 @@
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
-import { AppHeader } from '@/shared/components/app-header'
 import { AppSidebar } from '@/shared/components/app-sidebar'
 
 export type AppLayoutProps = {
@@ -9,15 +8,13 @@ export type AppLayoutProps = {
 }
 
 export const AppLayout = ({ tripId, children }: AppLayoutProps) => (
-  <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+  <Box sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'background.default' }}>
     <AppSidebar tripId={tripId} />
     <Box
       sx={{
-        pl: { xs: 9, md: '256px' },
-        transition: 'padding-left 0.3s ease',
+        pl: { xs: '72px', md: '256px' },
       }}
     >
-      <AppHeader tripId={tripId} />
       <Box component="main" sx={{ p: 3 }}>
         {children}
       </Box>
