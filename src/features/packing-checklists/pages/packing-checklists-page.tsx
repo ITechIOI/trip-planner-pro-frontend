@@ -18,8 +18,13 @@ import type {
   RequiredStatus,
 } from '../types/packing-item'
 
-export const PackingChecklistsPage = () => {
-  const tripId = 10 // TODO: replace with selected trip id from route/dashboard
+type PackingChecklistsPageProps = {
+  tripId: number
+}
+
+export const PackingChecklistsPage = ({
+  tripId,
+}: PackingChecklistsPageProps) => {
 
   const {
     data: apiItems = [],
