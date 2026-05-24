@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import Grid from '@mui/material/Grid'
 import Chip from '@mui/material/Chip'
 import FormControl from '@mui/material/FormControl'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -28,7 +27,6 @@ import type {
   ItineraryPriority,
   ItineraryResponse,
   ItineraryStatus,
-  ListTripItinerariesParams,
   ListTripItinerariesQueryError,
   TripDashboardResponse,
 } from '@/shared'
@@ -60,12 +58,6 @@ export type ItineraryPageProps = {
 type ListViewMode = 'timeline' | 'list'
 
 type GroupedItineraries = Record<string, ItineraryResponse[]>
-
-/** First page: offset 0 with API max page size (limit max 50). */
-const DEFAULT_TRIP_ITINERARIES_PARAMS: ListTripItinerariesParams = {
-  offset: 0,
-  limit: 50,
-}
 
 const formatDateHeading = (dateStr: string) => {
   if (dateStr === 'Unscheduled') {
@@ -117,7 +109,7 @@ const ItineraryContent = ({ tripId, viewMode = 'edit' }: ItineraryPageProps) => 
   const [filterDate, setFilterDate] = useState('')
   const [listViewMode, setListViewMode] = useState<ListViewMode>('timeline')
 
-  const itinerariesQuery = useTripItineraries(tripId, DEFAULT_TRIP_ITINERARIES_PARAMS)
+  const itinerariesQuery = useTripItineraries(tripId)
   const dashboardQuery = useTripDashboard(tripId)
 
   const stats = buildItineraryDashboardStats(
@@ -303,123 +295,105 @@ const ItineraryContent = ({ tripId, viewMode = 'edit' }: ItineraryPageProps) => 
         </Alert>
       ) : null}
 
-      <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <TextField
-            size="small"
-            fullWidth
-            placeholder="Search activities..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </Grid>
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        spacing={2}
+        sx={{ alignItems: { lg: 'center' } }}
+      >
+        <TextField
+          size="small"
+          placeholder="Search activities..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          sx={{ flex: 1, maxWidth: { lg: 420 } }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
 
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Grid
-            container
-            spacing={1}
-            sx={{
-              alignItems: 'center',
-              flexWrap: { xs: 'wrap', md: 'nowrap' },
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }} useFlexGap>
+          <FilterSelect
+            label="Category"
+            value={filterCategory}
+            onChange={setFilterCategory}
+            options={[
+              { value: '', label: 'All Categories' },
+              ...ITINERARY_CATEGORIES.map((category) => ({
+                value: category,
+                label: category,
+              })),
+            ]}
+          />
+          <FilterSelect
+            label="Status"
+            value={filterStatus}
+            onChange={setFilterStatus}
+            options={[
+              { value: '', label: 'All Status' },
+              ...ITINERARY_STATUSES.map((status) => ({
+                value: status,
+                label: status,
+              })),
+            ]}
+          />
+          <FilterSelect
+            label="Priority"
+            value={filterPriority}
+            onChange={setFilterPriority}
+            options={[
+              { value: '', label: 'All Priorities' },
+              ...ITINERARY_PRIORITIES.map((priority) => ({
+                value: priority,
+                label: priority,
+              })),
+            ]}
+          />
+          <TextField
+            label="Date"
+            type="date"
+            size="small"
+            value={filterDate}
+            onChange={(event) => setFilterDate(event.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ width: 160 }}
+          />
+
+          {hasActiveFilters ? (
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<ClearIcon />}
+              onClick={clearFilters}
+            >
+              Clear
+            </Button>
+          ) : null}
+
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={listViewMode}
+            onChange={(_event, value: ListViewMode | null) => {
+              if (value) {
+                setListViewMode(value)
+              }
             }}
           >
-            <Grid size="auto">
-              <FilterSelect
-                label="Category"
-                value={filterCategory}
-                onChange={setFilterCategory}
-                options={[
-                  { value: '', label: 'All Categories' },
-                  ...ITINERARY_CATEGORIES.map((category) => ({
-                    value: category,
-                    label: category,
-                  })),
-                ]}
-              />
-            </Grid>
-            <Grid size="auto">
-              <FilterSelect
-                label="Status"
-                value={filterStatus}
-                onChange={setFilterStatus}
-                options={[
-                  { value: '', label: 'All Status' },
-                  ...ITINERARY_STATUSES.map((status) => ({
-                    value: status,
-                    label: status,
-                  })),
-                ]}
-              />
-            </Grid>
-            <Grid size="auto">
-              <FilterSelect
-                label="Priority"
-                value={filterPriority}
-                onChange={setFilterPriority}
-                options={[
-                  { value: '', label: 'All Priorities' },
-                  ...ITINERARY_PRIORITIES.map((priority) => ({
-                    value: priority,
-                    label: priority,
-                  })),
-                ]}
-              />
-            </Grid>
-            <Grid size="auto">
-              <TextField
-                label="Date"
-                type="date"
-                size="small"
-                value={filterDate}
-                onChange={(event) => setFilterDate(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: 160 }}
-              />
-            </Grid>
-            {hasActiveFilters ? (
-              <Grid size="auto">
-                <Button
-                  variant="text"
-                  size="small"
-                  startIcon={<ClearIcon />}
-                  onClick={clearFilters}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  Clear
-                </Button>
-              </Grid>
-            ) : null}
-            <Grid size="auto" sx={{ ml: { md: 'auto' } }}>
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={listViewMode}
-                onChange={(_event, value: ListViewMode | null) => {
-                  if (value) {
-                    setListViewMode(value)
-                  }
-                }}
-              >
-                <ToggleButton value="timeline">
-                  <CalendarMonthOutlinedIcon fontSize="small" />
-                </ToggleButton>
-                <ToggleButton value="list">
-                  <ViewListOutlinedIcon fontSize="small" />
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
+            <ToggleButton value="timeline">
+              <CalendarMonthOutlinedIcon fontSize="small" />
+            </ToggleButton>
+            <ToggleButton value="list">
+              <ViewListOutlinedIcon fontSize="small" />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
+      </Stack>
 
       {hasActiveFilters ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -534,7 +508,7 @@ const FilterSelect = <T extends string>({
   onChange,
   options,
 }: FilterSelectProps<T>) => (
-  <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
+  <FormControl size="small" sx={{ minWidth: 140 }}>
     <InputLabel>{label}</InputLabel>
     <Select
       label={label}

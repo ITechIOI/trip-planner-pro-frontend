@@ -9,6 +9,7 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import CloseIcon from '@mui/icons-material/Close'
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
@@ -47,6 +48,8 @@ const formatDate = (dateStr?: string | null) => {
 
 export const AppHeader = ({ tripId }: AppHeaderProps) => {
   const [showAlerts, setShowAlerts] = useState(true)
+  const [notificationsAnchor, setNotificationsAnchor] =
+    useState<HTMLElement | null>(null)
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null)
 
   const tripQuery = useTrip(tripId)
@@ -65,6 +68,9 @@ export const AppHeader = ({ tripId }: AppHeaderProps) => {
 
   const hasAlerts =
     stats.hasOverdueActivities || stats.isBudgetWarning || stats.isBudgetCritical
+  const alertCount =
+    (stats.hasOverdueActivities ? 1 : 0) +
+    (stats.isBudgetWarning || stats.isBudgetCritical ? 1 : 0)
 
   return (
     <Box
@@ -130,6 +136,77 @@ export const AppHeader = ({ tripId }: AppHeaderProps) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton onClick={(event) => setNotificationsAnchor(event.currentTarget)}>
+            <NotificationsOutlinedIcon />
+            {hasAlerts ? (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  bgcolor: 'error.main',
+                  color: 'error.contrastText',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                {alertCount}
+              </Box>
+            ) : null}
+          </IconButton>
+
+          <Menu
+            anchorEl={notificationsAnchor}
+            open={Boolean(notificationsAnchor)}
+            onClose={() => setNotificationsAnchor(null)}
+          >
+            {stats.hasOverdueActivities ? (
+              <MenuItem>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Overdue Activities
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {stats.overdueActivities}{' '}
+                    {stats.overdueActivities === 1 ? 'activity is' : 'activities are'} past due
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ) : null}
+            {stats.isBudgetCritical ? (
+              <MenuItem>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Budget Exceeded
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    You have spent {stats.budgetUsagePercentage}% of your budget
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ) : null}
+            {stats.isBudgetWarning && !stats.isBudgetCritical ? (
+              <MenuItem>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    Budget Warning
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    You have used {stats.budgetUsagePercentage}% of your budget
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ) : null}
+            {!hasAlerts ? (
+              <MenuItem disabled>No notifications</MenuItem>
+            ) : null}
+          </Menu>
+
           <IconButton onClick={(event) => setAccountAnchor(event.currentTarget)}>
             <PersonOutlineOutlinedIcon />
           </IconButton>
