@@ -182,3 +182,782 @@
     border-right-color: var(--border);
   }
 }
+
+
+
+
+/* For Account setting */
+.account-settings-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fbff 0%, #edf5ff 100%);
+  color: #111827;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.as-header {
+  height: 72px;
+  padding: 0 96px;
+  background: #ffffff;
+  border-bottom: 1px solid #dbe3ef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.as-logo-wrap,
+.as-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.as-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #4f5df5;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.as-brand {
+  font-size: 17px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.as-brand span,
+.as-footer-brand strong {
+  color: #3867f6;
+}
+
+.as-user-button {
+  height: 44px;
+  border: 1px solid #d6deea;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.as-user-avatar-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e8f0ff;
+  color: #3867f6;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.as-main {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 48px 24px 70px;
+}
+
+.as-title-section h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.as-title-section p {
+  margin: 8px 0 36px;
+  color: #5f6b7a;
+  font-size: 16px;
+}
+
+.as-content {
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.as-profile-card,
+.as-card {
+  background: #ffffff;
+  border: 1px solid #d7e0ec;
+  border-radius: 16px;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+}
+
+.as-profile-card {
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.as-avatar-wrap {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 16px;
+  position: relative;
+}
+
+.as-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  background: #4b72ec;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  font-weight: 800;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+}
+
+.as-online-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #00c853;
+  border: 4px solid #ffffff;
+  position: absolute;
+  right: 4px;
+  bottom: 16px;
+}
+
+.as-profile-card h2 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.as-role {
+  margin: 6px 0 0;
+  color: #6b7280;
+}
+
+.as-divider {
+  height: 1px;
+  background: #e3eaf3;
+  margin: 24px 0;
+}
+
+.as-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.as-stats strong {
+  display: block;
+  color: #3867f6;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.as-stats span {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.as-contact-list {
+  display: grid;
+  gap: 14px;
+  text-align: left;
+}
+
+.as-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #5f6b7a;
+  font-size: 14px;
+}
+
+.as-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: #3867f6;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.as-right-column {
+  display: grid;
+  gap: 24px;
+}
+
+.as-card {
+  padding: 28px;
+}
+
+.as-info-card {
+  min-height: 280px;
+}
+
+.as-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+.as-card h2,
+.as-card-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.as-edit-button {
+  border: none;
+  background: transparent;
+  color: #3867f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.as-form-group {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.as-form-group label {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.as-form-group input {
+  height: 46px;
+  border: 1px solid #d7e0ec;
+  border-radius: 13px;
+  padding: 0 16px;
+  font-size: 15px;
+  background: #fbfdff;
+  color: #111827;
+}
+
+.as-actions-card h2 {
+  margin-bottom: 22px;
+}
+
+.as-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.as-secondary-button,
+.as-danger-button {
+  height: 42px;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.as-secondary-button {
+  border: 1px solid #d7e0ec;
+  background: #ffffff;
+  color: #111827;
+}
+
+.as-danger-button {
+  border: 1px solid #dc2626;
+  background: #e60000;
+  color: #ffffff;
+}
+
+.as-footer {
+  min-height: 120px;
+  padding: 28px 220px;
+  background: #ffffff;
+  border-top: 1px solid #dbe3ef;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.as-logo-footer {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.as-footer p {
+  margin: 8px 0;
+  color: #6b7280;
+}
+
+.as-footer small {
+  color: #6b7280;
+}
+
+.as-footer-links {
+  display: flex;
+  gap: 28px;
+  color: #5f6b7a;
+  font-size: 13px;
+}
+
+.as-version {
+  background: #f1f5f9;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .as-header {
+    padding: 0 24px;
+  }
+
+  .as-content {
+    grid-template-columns: 1fr;
+  }
+
+  .as-footer {
+    padding: 28px 24px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .as-footer-links {
+    flex-wrap: wrap;
+  }
+}
+
+/* Alert màu xanh hiển thị sau khi cập nhật thông tin thành công */
+.as-success-alert {
+  min-height: 44px;
+  margin: -18px 0 24px;
+  padding: 0 16px;
+  border: 1px solid #b8efca;
+  border-radius: 12px;
+  background: #ecfff2;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.as-success-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #17c964;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+/* Nhóm nút Cancel và Save Changes trong form edit */
+.as-form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.as-cancel-button,
+.as-save-button {
+  height: 42px;
+  border-radius: 10px;
+  padding: 0 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.as-cancel-button {
+  border: 1px solid #d7e0ec;
+  background: #ffffff;
+  color: #111827;
+}
+
+.as-save-button {
+  border: 1px solid #4f5df5;
+  background: #4f5df5;
+  color: #ffffff;
+}
+
+/* Khi input được phép chỉnh sửa thì viền xanh để giống trạng thái edit trong Figma */
+.as-form-group input:not([readonly]):focus {
+  border-color: #4f5df5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 93, 245, 0.12);
+}
+
+/* Lớp phủ tối phía sau modal */
+.as-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.55);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+/* Hộp modal xác nhận */
+.as-confirm-modal {
+  width: min(460px, calc(100vw - 32px));
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.as-confirm-modal h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+}
+
+.as-confirm-modal p {
+  margin: 0;
+  color: #5f6b7a;
+  line-height: 1.5;
+}
+
+.as-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* Modal đổi mật khẩu */
+.as-password-modal {
+  width: min(430px, calc(100vw - 32px));
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+/* Header của modal đổi mật khẩu: gồm icon, title, mô tả và nút đóng */
+.as-password-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.as-password-title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.as-password-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eaf2ff;
+  color: #3867f6;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.as-password-modal h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.as-password-modal p {
+  margin: 0;
+  color: #5f6b7a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Nút X để đóng modal */
+.as-close-button {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.as-password-form {
+  display: grid;
+  gap: 16px;
+}
+
+/* Bọc input password để đặt icon con mắt ở bên phải */
+.as-password-input-wrap {
+  position: relative;
+}
+
+.as-password-input-wrap input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+/* Nút hiện/ẩn mật khẩu */
+.as-eye-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  cursor: pointer;
+}
+
+/* Dòng gợi ý điều kiện mật khẩu */
+.as-password-hint {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Trạng thái disabled cho nút Save Password */
+.as-save-button:disabled {
+  border-color: #b7cdfd;
+  background: #9ec0ff;
+  cursor: not-allowed;
+}
+
+/* Overlay xác nhận password đặt z-index cao hơn modal password */
+.as-modal-overlay-top {
+  z-index: 60;
+}
+
+/* Modal xác nhận xóa tài khoản */
+.as-delete-modal {
+  width: min(430px, calc(100vw - 32px));
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+/* Icon cảnh báo đỏ trong modal delete */
+.as-delete-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #dc2626;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+/* Tiêu đề modal delete */
+.as-delete-modal h2 {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 20px;
+}
+
+/* Nội dung cảnh báo trong modal delete */
+.as-delete-modal p {
+  margin: 0;
+  color: #5f6b7a;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Nhóm nút trong modal delete */
+.as-delete-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Nút xác nhận xóa tài khoản */
+.as-delete-confirm-button {
+  height: 42px;
+  border: 1px solid #dc2626;
+  border-radius: 10px;
+  background: #dc0000;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Nút cancel trong modal delete */
+.as-delete-cancel-button {
+  width: 100%;
+}
+
+/* Wrapper của user button để dropdown có thể định vị theo nút user */
+.as-user-menu-wrap {
+  position: relative;
+}
+
+/* Dropdown menu ở góc phải header */
+.as-user-dropdown {
+  width: 180px;
+  padding: 6px;
+  border: 1px solid #d7e0ec;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+}
+
+/* Từng item trong dropdown */
+.as-user-dropdown-item {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Hiệu ứng hover để người dùng biết item có thể bấm */
+.as-user-dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+/* Item Settings đang được chọn, giống Figma có nền xám */
+.as-user-dropdown-item-active {
+  background: #e5e7eb;
+}
+
+/* Item Log out có màu đỏ để phân biệt thao tác thoát tài khoản */
+.as-user-dropdown-item-danger {
+  color: #dc2626;
+}
+
+/* Khu vực Profile Photo trong card Personal Information */
+.as-profile-photo-section {
+  margin-bottom: 20px;
+}
+
+.as-profile-photo-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Dòng chứa avatar và nút upload */
+.as-profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Avatar nhỏ trong card Personal Information */
+.as-profile-photo-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 999px;
+  background: #4b72ec;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+/* Nút upload photo khi edit */
+.as-upload-photo-button {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d7e0ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Dòng ghi chú định dạng ảnh */
+.as-upload-hint {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* Profile Photo đặt dọc trong card Personal Information, giống Figma:
+   Label ở trên, avatar ở dưới, sau đó mới tới Full Name. */
+.as-profile-photo-section {
+  margin: 0 0 22px;
+}
+
+/* Label Profile Photo cùng style với label Full Name / Email / Phone */
+.as-profile-photo-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Dòng chứa avatar và nút upload.
+   Khi không edit thì chỉ có avatar nằm bên trái. */
+.as-profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Avatar nhỏ trong card Personal Information */
+.as-profile-photo-avatar {
+  width: 95px;
+  height: 95px;
+  border-radius: 999px;
+  background: #4b72ec;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+  border: 4px solid #dbeafe;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
+}
+
+/* Nút upload chỉ xuất hiện khi đang edit */
+.as-upload-photo-button {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d7e0ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Dòng ghi chú định dạng ảnh khi edit */
+.as-upload-hint {
+  display: block;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 12px;
+}
