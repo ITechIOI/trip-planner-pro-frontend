@@ -1,5 +1,10 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+// useNavigate dùng để chuyển trang bằng code.
+// Sau khi người dùng xác nhận xóa account, mình sẽ điều hướng về /login.
 import '../App.css'
+
+
 
 // Kiểu dữ liệu cho thông tin cá nhân của user.
 // Dùng TypeScript để kiểm soát field nào được phép có trong user profile.
@@ -18,6 +23,11 @@ const initialUserProfile: UserProfile = {
 }
 
 export const AccountSettingsPage = () => {
+
+  // navigate dùng để chuyển trang bằng code.
+  // Ở đây dùng để đưa user về trang login sau khi xác nhận xóa account.
+  const navigate = useNavigate()
+    
   // profile là dữ liệu đang hiển thị chính thức trên giao diện.
   const [profile, setProfile] = useState<UserProfile>(initialUserProfile)
 
@@ -50,6 +60,10 @@ export const AccountSettingsPage = () => {
   // showCurrentPassword và showNewPassword dùng để hiện/ẩn mật khẩu.
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+
+  // showDeleteAccountModal dùng để bật/tắt modal xác nhận xóa tài khoản.
+  // Theo requirement, Delete Account có thể skip, nên hiện tại mình chỉ làm UI flow.
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
 
   // Hàm này chạy khi người dùng bấm nút Edit.
   // Nó đưa formData về đúng dữ liệu hiện tại và bật chế độ chỉnh sửa.
@@ -134,6 +148,30 @@ export const AccountSettingsPage = () => {
   const canSavePassword =
     passwordForm.currentPassword.trim().length > 0 &&
     passwordForm.newPassword.trim().length >= 8
+
+    // Hàm này chạy khi user bấm nút Delete Account.
+  // Nó chỉ mở modal cảnh báo, chưa xóa ngay để tránh thao tác nguy hiểm.
+  const handleOpenDeleteAccountModal = () => {
+    setShowDeleteAccountModal(true)
+    setSuccessMessage('')
+  }
+
+  // Hàm này chạy khi user bấm Cancel trong modal Delete Account.
+  // Nó đóng modal và giữ nguyên tài khoản.
+  const handleCloseDeleteAccountModal = () => {
+    setShowDeleteAccountModal(false)
+  }
+
+  // Hàm này chạy khi user xác nhận xóa tài khoản.
+  // Bản hiện tại chỉ mô phỏng flow: đóng modal và chuyển về login.
+  // Khi nối API thật, có thể gọi useDeleteCurrentUserAction() tại đây.
+  const handleConfirmDeleteAccount = () => {
+    setShowDeleteAccountModal(false)
+
+    // Điều hướng về trang login vì sau khi xóa account,
+    // user không nên tiếp tục ở trang Account Settings nữa.
+    navigate('/login')
+  }
 
   return (
     <div className="account-settings-page">
@@ -304,9 +342,18 @@ export const AccountSettingsPage = () => {
                 🔒 Change Password
                 </button>              
 
-                <button className="as-danger-button" type="button">
+                {/* <button className="as-danger-button" type="button">
                   🗑 Delete Account
+                </button> */}
+
+                <button
+                className="as-danger-button"
+                type="button"
+                onClick={handleOpenDeleteAccountModal}
+                >
+                🗑 Delete Account
                 </button>
+
               </div>
             </section>
           </div>
@@ -508,6 +555,44 @@ export const AccountSettingsPage = () => {
                 onClick={handleConfirmPasswordSave}
               >
                 Confirm Change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+            {/* Modal xác nhận xóa tài khoản.
+          Đây là thao tác nguy hiểm nên cần modal cảnh báo rõ ràng.
+          Hiện tại chỉ làm UI flow và chuyển về login, chưa gọi API xóa thật. */}
+      {showDeleteAccountModal && (
+        <div className="as-modal-overlay">
+          <div className="as-delete-modal">
+            <div className="as-delete-icon">⚠</div>
+
+            <h2>Delete Your Account?</h2>
+
+            <p>
+              This action cannot be undone. This will permanently delete your
+              account, all your trip plans, saved destinations, and remove your
+              data from our servers.
+            </p>
+
+            <div className="as-delete-actions">
+              <button
+                className="as-delete-confirm-button"
+                type="button"
+                onClick={handleConfirmDeleteAccount}
+              >
+                Yes, Delete My Account
+              </button>
+
+              <button
+                className="as-cancel-button as-delete-cancel-button"
+                type="button"
+                onClick={handleCloseDeleteAccountModal}
+              >
+                Cancel
               </button>
             </div>
           </div>
