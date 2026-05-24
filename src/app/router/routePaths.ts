@@ -4,4 +4,5 @@ export const routePaths = {
   signup: '/signup',
   recoverPassword: '/recover-password',
   dashboard: '/dashboard',
+  accountSettings: '/account-settings',   //Thêm
 } as const
