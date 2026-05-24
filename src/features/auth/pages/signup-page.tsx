@@ -17,7 +17,7 @@ export const SignUpPage = () => {
   const registerMutation = useRegisterAction({
     mutation: {
       onSuccess: () => {
-        navigate(routePaths.dashboard, { replace: true })
+        navigate(routePaths.trips, { replace: true })
       },
     },
   })

@@ -43,6 +43,11 @@ export interface ParsedIsoFormFields {
   time: string
 }
 
+const LOCAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const LOCAL_TIME_PATTERN = /^\d{2}:\d{2}(?::\d{2})?$/
+const LOCAL_DATE_TIME_PATTERN =
+  /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d{1,9})?)?$/
+
 export interface NormalizedTrip {
   id?: number
   tripName: string
@@ -68,12 +73,25 @@ export function toItineraryEnum<T extends string>(
     : fallback
 }
 
+export function isLocalDate(value: string): boolean {
+  return LOCAL_DATE_PATTERN.test(value.trim())
+}
+
+export function isLocalTime(value: string): boolean {
+  return LOCAL_TIME_PATTERN.test(value.trim())
+}
+
 export function toIsoDateTime(date: string, time: string): string | null {
-  if (!date || !time) {
+  const normalizedDate = date.trim()
+  const normalizedTime = time.trim()
+
+  if (!isLocalDate(normalizedDate) || !isLocalTime(normalizedTime)) {
     return null
   }
 
-  return new Date(`${date}T${time}:00`).toISOString()
+  const timeWithSeconds =
+    normalizedTime.length === 5 ? `${normalizedTime}:00` : normalizedTime
+  return `${normalizedDate}T${timeWithSeconds}`
 }
 
 export function parseIsoToFormFields(isoString?: string | null): ParsedIsoFormFields {
@@ -81,12 +99,15 @@ export function parseIsoToFormFields(isoString?: string | null): ParsedIsoFormFi
     return { date: '', time: '' }
   }
 
-  const parsed = new Date(isoString)
-  const pad = (value: number) => String(value).padStart(2, '0')
+  const match = isoString.trim().match(LOCAL_DATE_TIME_PATTERN)
+
+  if (!match) {
+    return { date: '', time: '' }
+  }
 
   return {
-    date: `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`,
-    time: `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`,
+    date: match[1],
+    time: match[2],
   }
 }
 

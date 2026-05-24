@@ -15,7 +15,7 @@ export const LoginPage = () => {
   const loginMutation = useLoginAction({
     mutation: {
       onSuccess: () => {
-        navigate(routePaths.dashboard, { replace: true });
+        navigate(routePaths.trips, { replace: true });
       },
     },
   });

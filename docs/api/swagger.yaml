@@ -355,6 +355,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TripMemberRole'
       responses:
         '200':
           description: Paginated trip members

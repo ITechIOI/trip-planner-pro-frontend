@@ -7,6 +7,7 @@
  */
 import type { LimitParameter } from './limitParameter';
 import type { OffsetParameter } from './offsetParameter';
+import type { TripMemberRole } from './tripMemberRole';
 
 export type ListTripMembersParams = {
 /**
@@ -18,4 +19,5 @@ offset?: OffsetParameter;
  * @maximum 50
  */
 limit?: LimitParameter;
+role?: TripMemberRole;
 };

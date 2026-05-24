@@ -1,38 +1,91 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { LoginPage, RecoverPasswordPage, SignUpPage } from '@/features/auth'
-import { ItineraryPage, TripDashboardPage } from '@/features/itineraries'
-import { DashboardPage } from '@/pages'
+import {
+  ItineraryPage,
+  PlaceholderPage,
+  TripDashboardPage,
+} from '@/features/itineraries'
+import { TripMembersPage } from '@/features/trip-members'
+import { TripsPage } from '@/features/trips'
+import { DashboardPage, ProfilePage } from '@/pages'
 import { hasValidAccessToken } from '@/shared'
+import { AuthenticatedLayout } from '@/shared/components'
 import { ProtectedRoute } from './ProtectedRoute'
 import { routePaths } from './routePaths'
 import { parseTripIdParam, type TripRouteParams } from './trip-route-params'
 
-const TripDashboardRoute = () => {
+type TripRouteRendererProps = {
+  children: (tripId: number) => ReactNode
+}
+
+const TripRouteRenderer = ({ children }: TripRouteRendererProps) => {
   const { tripId } = useParams<TripRouteParams>()
   const parsedTripId = parseTripIdParam(tripId)
 
   if (parsedTripId == null) {
-    return <Navigate to={routePaths.dashboard} replace />
+    return <Navigate to={routePaths.trips} replace />
   }
 
-  return <TripDashboardPage tripId={parsedTripId} />
+  return <>{children(parsedTripId)}</>
+}
+
+const TripDashboardRoute = () => {
+  return (
+    <TripRouteRenderer>
+      {(tripId) => <TripDashboardPage tripId={tripId} />}
+    </TripRouteRenderer>
+  )
 }
 
 const TripItineraryRoute = () => {
-  const { tripId } = useParams<TripRouteParams>()
-  const parsedTripId = parseTripIdParam(tripId)
+  return (
+    <TripRouteRenderer>
+      {(tripId) => <ItineraryPage tripId={tripId} />}
+    </TripRouteRenderer>
+  )
+}
 
-  if (parsedTripId == null) {
-    return <Navigate to={routePaths.dashboard} replace />
-  }
+const TripMembersRoute = () => {
+  return (
+    <TripRouteRenderer>
+      {(tripId) => <TripMembersPage tripId={tripId} />}
+    </TripRouteRenderer>
+  )
+}
 
-  return <ItineraryPage tripId={parsedTripId} />
+const TripPackingRoute = () => {
+  return (
+    <TripRouteRenderer>
+      {(tripId) => (
+        <PlaceholderPage
+          tripId={tripId}
+          title="Packing"
+          description="Packing checklist management will be available in this workspace."
+        />
+      )}
+    </TripRouteRenderer>
+  )
+}
+
+const TripBudgetRoute = () => {
+  return (
+    <TripRouteRenderer>
+      {(tripId) => (
+        <PlaceholderPage
+          tripId={tripId}
+          title="Budget"
+          description="Budget management will be available in this workspace."
+        />
+      )}
+    </TripRouteRenderer>
+  )
 }
 
 const AuthRedirect = () => {
   return (
     <Navigate
-      to={hasValidAccessToken() ? routePaths.dashboard : routePaths.login}
+      to={hasValidAccessToken() ? routePaths.trips : routePaths.login}
       replace
     />
   )
@@ -49,9 +102,16 @@ export const AppRoutes = () => {
         element={<RecoverPasswordPage />}
       />
       <Route element={<ProtectedRoute />}>
-        <Route path={routePaths.dashboard} element={<DashboardPage />} />
-        <Route path={routePaths.tripDashboard} element={<TripDashboardRoute />} />
-        <Route path={routePaths.tripItinerary} element={<TripItineraryRoute />} />
+        <Route element={<AuthenticatedLayout />}>
+          <Route path={routePaths.dashboard} element={<DashboardPage />} />
+          <Route path={routePaths.profile} element={<ProfilePage />} />
+          <Route path={routePaths.trips} element={<TripsPage />} />
+          <Route path={routePaths.tripDashboard} element={<TripDashboardRoute />} />
+          <Route path={routePaths.tripItinerary} element={<TripItineraryRoute />} />
+          <Route path={routePaths.tripMembers} element={<TripMembersRoute />} />
+          <Route path={routePaths.tripPacking} element={<TripPackingRoute />} />
+          <Route path={routePaths.tripBudget} element={<TripBudgetRoute />} />
+        </Route>
       </Route>
       <Route path="*" element={<AuthRedirect />} />
     </Routes>
