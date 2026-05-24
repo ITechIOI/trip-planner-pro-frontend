@@ -35,3 +35,13 @@ export const getUploadCurrentUserAvatarErrorMessage = (
     default: "Unable to upload avatar. Please try again later.",
   });
 };
+
+export const getUpdateCurrentUserProfileErrorMessage = (
+  error: UpdateCurrentUserProfileMutationError,
+) => {
+  return getApiErrorMessage(error, {
+    400: "Check your profile details and try again.",
+    401: "Invalid session. Please try again.",
+    default: "Profile could not be saved. Please try again.",
+  });
+};
