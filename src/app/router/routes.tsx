@@ -109,14 +109,12 @@ export const AppRoutes = () => {
         element={<RecoverPasswordPage />}
       />
 
-      {/* TẠM THỜI để ngoài ProtectedRoute để code UI trước */}
-      <Route
-        path={routePaths.accountSettings}
-        element={<AccountSettingsPage />}
-      />
-
       <Route element={<ProtectedRoute />}>
         <Route path={routePaths.dashboard} element={<DashboardPage />} />
+        <Route
+          path={routePaths.accountSettings}
+          element={<AccountSettingsPage />}
+        />
       </Route>
 
       <Route path="*" element={<AuthRedirect />} />
