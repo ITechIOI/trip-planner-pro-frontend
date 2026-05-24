@@ -65,6 +65,17 @@ export const AccountSettingsPage = () => {
   // Theo requirement, Delete Account có thể skip, nên hiện tại mình chỉ làm UI flow.
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
 
+  // showUserDropdown dùng để bật/tắt menu dropdown ở góc phải header.
+  // Khi user bấm vào nút tên tài khoản, menu Profile / Settings / Log out sẽ hiện ra.
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+
+    // activeUserTab dùng để xác định người dùng đang xem mục nào trong dropdown.
+  // - 'profile': chỉ hiển thị thông tin cá nhân, không hiển thị Account Actions.
+  // - 'settings': hiển thị đầy đủ thông tin cá nhân và Account Actions.
+  const [activeUserTab, setActiveUserTab] = useState<'profile' | 'settings'>(
+    'profile',
+  )
+
   // Hàm này chạy khi người dùng bấm nút Edit.
   // Nó đưa formData về đúng dữ liệu hiện tại và bật chế độ chỉnh sửa.
   const handleEdit = () => {
@@ -173,6 +184,36 @@ export const AccountSettingsPage = () => {
     navigate('/login')
   }
 
+    // Hàm này chạy khi user bấm nút tài khoản ở header.
+  // Nó đảo trạng thái dropdown: đang đóng thì mở, đang mở thì đóng.
+  const handleToggleUserDropdown = () => {
+    setShowUserDropdown((prevValue) => !prevValue)
+  }
+
+  // Khi bấm Profile, chỉ hiển thị phần thông tin cá nhân.
+  // Account Actions sẽ bị ẩn để đúng logic: Profile là xem hồ sơ, không phải cài đặt tài khoản.
+  const handleProfileClick = () => {
+    setActiveUserTab('profile')
+    setShowUserDropdown(false)
+  }
+
+  // Khi bấm Settings, hiển thị đầy đủ phần cài đặt,
+  // bao gồm Account Actions như Change Password và Delete Account.
+  const handleSettingsClick = () => {
+    setActiveUserTab('settings')
+    setShowUserDropdown(false)
+    navigate('/account-settings')
+  }
+
+  // Hàm này xử lý Log out ở mức UI.
+  // Hiện tại chuyển về /login; sau này có thể clear token tại đây.
+  const handleLogout = () => {
+    setShowUserDropdown(false)
+
+    // Khi tích hợp logout thật, có thể gọi clearAccessToken() trước khi navigate.
+    navigate('/login')
+  }
+
   return (
     <div className="account-settings-page">
       {/* Header: phần trên cùng của trang, gồm logo và menu user */}
@@ -184,18 +225,87 @@ export const AccountSettingsPage = () => {
           </span>
         </div>
 
-        <button className="as-user-button" type="button">
+        {/* <button className="as-user-button" type="button">
           <span className="as-user-avatar-small">SJ</span>
           <span>{profile.fullName}</span>
           <span>⌄</span>
-        </button>
+        </button> */}
+                {/* Khu vực user menu ở góc phải header.
+            Dùng wrapper position relative để dropdown bám theo nút user. */}
+        <div className="as-user-menu-wrap">
+          <button
+            className="as-user-button"
+            type="button"
+            onClick={handleToggleUserDropdown}
+          >
+            <span className="as-user-avatar-small">SJ</span>
+            <span>{profile.fullName}</span>
+            <span>{showUserDropdown ? '⌃' : '⌄'}</span>
+          </button>
+
+          {/* Dropdown menu chỉ hiển thị khi showUserDropdown = true */}
+          {showUserDropdown && (
+            <div className="as-user-dropdown">
+                            <button
+                className={`as-user-dropdown-item ${
+                  activeUserTab === 'profile'
+                    ? 'as-user-dropdown-item-active'
+                    : ''
+                }`}
+                type="button"
+                onClick={handleProfileClick}
+              >
+                <span>♙</span>
+                <span>Profile</span>
+              </button>
+
+              <button
+                className={`as-user-dropdown-item ${
+                  activeUserTab === 'settings'
+                    ? 'as-user-dropdown-item-active'
+                    : ''
+                }`}
+                type="button"
+                onClick={handleSettingsClick}
+              >
+                <span>⚙</span>
+                <span>Settings</span>
+              </button>
+
+              <button
+                className="as-user-dropdown-item as-user-dropdown-item-danger"
+                type="button"
+                onClick={handleLogout}
+              >
+                <span>↪</span>
+                <span>Log out</span>
+              </button>
+            </div>
+          )}
+        </div>
+
       </header>
 
       {/* Main: phần nội dung chính của trang Account Settings */}
       <main className="as-main">
-        <section className="as-title-section">
+        {/* <section className="as-title-section">
           <h1>Account Settings</h1>
           <p>Manage your personal information and account preferences</p>
+        </section> */}
+                {/* Tiêu đề thay đổi theo tab người dùng chọn trong dropdown */}
+        <section className="as-title-section">
+          <h1>{activeUserTab === 'profile' ? 'Profile' : 'Account Settings'}</h1>
+          {/* Tiêu đề trang giữ nguyên Account Settings theo Figma,
+          dù user chọn Profile hay Settings trong dropdown. */}
+          {/* <section className="as-title-section">
+             <h1>Account Settings</h1>
+             <p>Manage your personal information and account preferences</p>
+          </section> */}
+          <p>
+            {activeUserTab === 'profile'
+              ? 'View your personal information'
+              : 'Manage your personal information and account preferences'}
+          </p>
         </section>
 
         {/* Success notification: chỉ hiện sau khi user lưu thông tin thành công */}
@@ -250,58 +360,83 @@ export const AccountSettingsPage = () => {
 
           <div className="as-right-column">
             {/* Card bên phải: thông tin cá nhân có thể chỉnh sửa */}
-            <section className="as-card as-info-card">
-              <div className="as-card-header">
-                <h2>Personal Information</h2>
+           <section className="as-card as-info-card">
+                <div className="as-card-header">
+                    <h2>Personal Information</h2>
 
-                {/* Khi chưa edit thì hiện nút Edit; khi đang edit thì ẩn nút Edit */}
-                {!isEditing && (
-                  <button
-                    className="as-edit-button"
-                    type="button"
-                    onClick={handleEdit}
-                  >
-                    ✎ Edit
-                  </button>
-                )}
-              </div>
+                    {/* Khi chưa edit thì hiện nút Edit; khi đang edit thì ẩn nút Edit */}
+                    {!isEditing && (
+                    <button
+                        className="as-edit-button"
+                        type="button"
+                        onClick={handleEdit}
+                    >
+                        ✎ Edit
+                    </button>
+                    )}
+                </div>
 
-              <div className="as-form-group">
-                <label htmlFor="fullName">♙ Full Name</label>
-                <input
-                  id="fullName"
-                  value={isEditing ? formData.fullName : profile.fullName}
-                  readOnly={!isEditing}
-                  onChange={(event) =>
-                    handleInputChange('fullName', event.target.value)
-                  }
-                />
-              </div>
+                {/* Profile Photo là một field riêng nằm cùng luồng với Full Name, Email, Phone.
+                    Không đặt trong as-card-header để tránh bị đẩy sang góc phải. */}
+                <div className="as-profile-photo-section">
+                    <label className="as-profile-photo-label">▧ Profile Photo</label>
 
-              <div className="as-form-group">
-                <label htmlFor="email">✉ Email Address</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={isEditing ? formData.email : profile.email}
-                  readOnly={!isEditing}
-                  onChange={(event) =>
-                    handleInputChange('email', event.target.value)
-                  }
-                />
-              </div>
+                    <div className="as-profile-photo-row">
+                    <div className="as-profile-photo-avatar">SJ</div>
 
-              <div className="as-form-group">
-                <label htmlFor="phone">☎ Phone Number</label>
-                <input
-                  id="phone"
-                  value={isEditing ? formData.phone : profile.phone}
-                  readOnly={!isEditing}
-                  onChange={(event) =>
-                    handleInputChange('phone', event.target.value)
-                  }
-                />
-              </div>
+                    {/* Nút Upload Photo chỉ hiện khi đang edit.
+                        Theo requirement, avatar có thể update qua Profile option,
+                        nên hiện tại nút này chỉ là UI tham khảo. */}
+                    {isEditing && (
+                        <button className="as-upload-photo-button" type="button">
+                        ▧ Upload Photo
+                        </button>
+                    )}
+                    </div>
+
+                    {isEditing && (
+                    <small className="as-upload-hint">
+                        Click avatar or button to upload. Supports JPG, PNG, GIF.
+                    </small>
+                    )}
+                </div>
+
+                <div className="as-form-group">
+                    <label htmlFor="fullName">♙ Full Name</label>
+                    <input
+                    id="fullName"
+                    value={isEditing ? formData.fullName : profile.fullName}
+                    readOnly={!isEditing}
+                    onChange={(event) =>
+                        handleInputChange('fullName', event.target.value)
+                    }
+                    />
+                </div>
+
+                <div className="as-form-group">
+                    <label htmlFor="email">✉ Email Address</label>
+                    <input
+                    id="email"
+                    type="email"
+                    value={isEditing ? formData.email : profile.email}
+                    readOnly={!isEditing}
+                    onChange={(event) =>
+                        handleInputChange('email', event.target.value)
+                    }
+                    />
+                </div>
+
+                <div className="as-form-group">
+                    <label htmlFor="phone">☎ Phone Number</label>
+                    <input
+                    id="phone"
+                    value={isEditing ? formData.phone : profile.phone}
+                    readOnly={!isEditing}
+                    onChange={(event) =>
+                        handleInputChange('phone', event.target.value)
+                    }
+                    />
+                </div>
 
               {/* Chỉ hiện Cancel và Save Changes khi đang ở chế độ chỉnh sửa */}
               {isEditing && (
@@ -325,37 +460,32 @@ export const AccountSettingsPage = () => {
               )}
             </section>
 
-            {/* Card thao tác tài khoản */}
-            <section className="as-card as-actions-card">
-              <h2>Account Actions</h2>
+                        {/* Account Actions chỉ hiển thị khi người dùng chọn Settings.
+                Nếu chọn Profile thì ẩn phần này để đúng yêu cầu:
+                Profile chỉ xem thông tin, còn Settings mới có thao tác tài khoản. */}
+            {activeUserTab === 'settings' && (
+              <section className="as-card as-actions-card">
+                <h2>Account Actions</h2>
 
-              <div className="as-actions">
-                {/* <button className="as-secondary-button" type="button">
-                  🔒 Change Password
-                </button> */}
-                
-                <button
-                className="as-secondary-button"
-                type="button"
-                onClick={handleOpenPasswordModal}
-                >
-                🔒 Change Password
-                </button>              
+                <div className="as-actions">
+                  <button
+                    className="as-secondary-button"
+                    type="button"
+                    onClick={handleOpenPasswordModal}
+                  >
+                    🔒 Change Password
+                  </button>
 
-                {/* <button className="as-danger-button" type="button">
-                  🗑 Delete Account
-                </button> */}
-
-                <button
-                className="as-danger-button"
-                type="button"
-                onClick={handleOpenDeleteAccountModal}
-                >
-                🗑 Delete Account
-                </button>
-
-              </div>
-            </section>
+                  <button
+                    className="as-danger-button"
+                    type="button"
+                    onClick={handleOpenDeleteAccountModal}
+                  >
+                    🗑 Delete Account
+                  </button>
+                </div>
+              </section>
+            )}
           </div>
         </section>
       </main>
