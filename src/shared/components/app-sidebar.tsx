@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link, matchPath, useLocation } from 'react-router-dom'
 import {
   buildTripDashboardPath,
@@ -26,8 +25,13 @@ import { buildItineraryDashboardStats } from '@/features/itineraries/lib/itinera
 import { normalizeTripFromApi } from '@/features/itineraries/api/itinerary-mappers'
 import type { TripDashboardResponse, TripResponse } from '@/shared'
 
+export const SIDEBAR_WIDTH_EXPANDED = 256
+export const SIDEBAR_WIDTH_COLLAPSED = 72
+
 export type AppSidebarProps = {
   tripId: number
+  collapsed: boolean
+  onCollapsedChange: (collapsed: boolean) => void
 }
 
 type NavItem = {
@@ -56,9 +60,12 @@ const buildNavItems = (tripId: number): NavItem[] => [
   { to: '/budget', matchPath: '/budget', label: 'Budget', icon: AccountBalanceWalletOutlinedIcon },
 ]
 
-export const AppSidebar = ({ tripId }: AppSidebarProps) => {
+export const AppSidebar = ({
+  tripId,
+  collapsed,
+  onCollapsedChange,
+}: AppSidebarProps) => {
   const { pathname } = useLocation()
-  const [collapsed, setCollapsed] = useState(false)
   const navItems = buildNavItems(tripId)
 
   const tripQuery = useTrip(tripId)
@@ -68,7 +75,7 @@ export const AppSidebar = ({ tripId }: AppSidebarProps) => {
     dashboardQuery.data as TripDashboardResponse | undefined,
   )
 
-  const width = collapsed ? 72 : 256
+  const width = collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED
 
   return (
     <Box
@@ -232,7 +239,7 @@ export const AppSidebar = ({ tripId }: AppSidebarProps) => {
       ) : null}
 
       <IconButton
-        onClick={() => setCollapsed((current) => !current)}
+        onClick={() => onCollapsedChange(!collapsed)}
         sx={{
           position: 'absolute',
           right: -12,
