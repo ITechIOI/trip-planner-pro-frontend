@@ -116,6 +116,20 @@ export const TripsPage = () => {
     [tripsPage],
   );
   const accessMap = useTripAccessMap(trips);
+  const isAccessLoading = trips.length > 0 && accessMap.isLoading;
+  const accessibleTrips = useMemo(
+    () =>
+      isAccessLoading
+        ? []
+        : trips.filter((trip) => {
+            if (!trip.id) {
+              return false;
+            }
+
+            return Boolean(accessMap.accessByTripId[trip.id]?.canViewResources);
+          }),
+    [accessMap.accessByTripId, isAccessLoading, trips],
+  );
 
   const updateFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -408,7 +422,16 @@ export const TripsPage = () => {
             <Typography color="text.secondary">Loading trips...</Typography>
           ) : null}
 
-          {!tripsQuery.isLoading && !tripsQuery.error && trips.length === 0 ? (
+          {!tripsQuery.isLoading && isAccessLoading ? (
+            <Typography color="text.secondary">
+              Loading trip permissions...
+            </Typography>
+          ) : null}
+
+          {!tripsQuery.isLoading &&
+          !tripsQuery.error &&
+          !isAccessLoading &&
+          accessibleTrips.length === 0 ? (
             <EmptyState
               icon={FlightTakeoffOutlinedIcon}
               title="Your Next Adventure Begins Here!"
@@ -417,11 +440,11 @@ export const TripsPage = () => {
             />
           ) : null}
 
-          {trips.length > 0 ? (
+          {accessibleTrips.length > 0 ? (
             <Paper variant="outlined" sx={{ overflow: "hidden" }}>
               <TripList
                 accessByTripId={accessMap.accessByTripId}
-                trips={trips}
+                trips={accessibleTrips}
                 offset={currentOffset}
                 isActionPending={deleteTrip.isPending}
                 onDelete={requestDelete}

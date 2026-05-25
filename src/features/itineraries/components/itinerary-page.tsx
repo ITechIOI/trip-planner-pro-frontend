@@ -72,7 +72,7 @@ export type ItineraryPageProps = {
 type PageViewMode = "list" | "calendar";
 
 const DATE_FORMAT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const DEFAULT_ITINERARY_PAGE_LIMIT = 8;
+const DEFAULT_ITINERARY_PAGE_LIMIT = 10;
 const UNSCHEDULED_DATE_KEY = "__unscheduled__";
 
 const padDatePart = (value: number) => String(value).padStart(2, "0");

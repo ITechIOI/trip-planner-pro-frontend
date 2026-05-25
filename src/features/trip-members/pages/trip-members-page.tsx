@@ -73,12 +73,14 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
     query: { enabled: Boolean(ownerId) },
   });
   const access = useTripAccess(tripId);
+  const memberPageLimit =
+    ownerId && offset === 0 ? DEFAULT_MEMBER_LIMIT - 1 : DEFAULT_MEMBER_LIMIT;
   const membersParams = useMemo(
     () => ({
       offset,
-      limit: DEFAULT_MEMBER_LIMIT,
+      limit: memberPageLimit,
     }),
-    [offset],
+    [memberPageLimit, offset],
   );
   const membersQuery = useTripMembers(tripId, membersParams, {
     query: { placeholderData: keepPreviousData },
@@ -265,9 +267,23 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
           membersQuery.error as ListTripMembersQueryError,
         )
       : null;
-  const limit = membersPage?.limit ?? DEFAULT_MEMBER_LIMIT;
   const total = membersPage?.total ?? 0;
   const displayedTotal = ownerMember ? total + 1 : total;
+  const displayedOffset =
+    ownerMember && currentOffset > 0 ? currentOffset + 1 : currentOffset;
+  const displayedStart = displayedTotal > 0 ? displayedOffset + 1 : 0;
+  const displayedEnd = Math.min(
+    displayedOffset + displayedMembers.length,
+    displayedTotal,
+  );
+  const previousOffset =
+    ownerMember && currentOffset <= DEFAULT_MEMBER_LIMIT - 1
+      ? 0
+      : Math.max(0, currentOffset - DEFAULT_MEMBER_LIMIT);
+  const nextOffset =
+    ownerMember && currentOffset === 0
+      ? DEFAULT_MEMBER_LIMIT - 1
+      : currentOffset + DEFAULT_MEMBER_LIMIT;
   const isActionPending =
     addMember.isPending || updateRole.isPending || deleteMember.isPending;
 
@@ -337,35 +353,32 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
             canManageMembers={access.canManageMembers}
             isActionPending={isActionPending}
             members={displayedMembers}
-            offset={currentOffset}
+            offset={displayedOffset}
             onDelete={handleDelete}
             onRoleChange={handleRoleChange}
           />
         ) : null}
 
-        {total > limit ? (
+        {displayedTotal > DEFAULT_MEMBER_LIMIT ? (
           <Stack
             direction="row"
             spacing={2}
             sx={{ justifyContent: "flex-end", alignItems: "center" }}
           >
             <Typography color="text.secondary" variant="body2">
-              {currentOffset + 1} - {Math.min(currentOffset + limit, total)} of{" "}
-              {total}
+              {displayedStart} - {displayedEnd} of {displayedTotal}
             </Typography>
             <Button
               variant="outlined"
               disabled={currentOffset <= 0 || membersQuery.isFetching}
-              onClick={() => setOffset(Math.max(0, currentOffset - limit))}
+              onClick={() => setOffset(previousOffset)}
             >
               Previous
             </Button>
             <Button
               variant="outlined"
-              disabled={
-                currentOffset + limit >= total || membersQuery.isFetching
-              }
-              onClick={() => setOffset(currentOffset + limit)}
+              disabled={displayedEnd >= displayedTotal || membersQuery.isFetching}
+              onClick={() => setOffset(nextOffset)}
             >
               Next
             </Button>
