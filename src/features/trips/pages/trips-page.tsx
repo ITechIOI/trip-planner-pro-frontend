@@ -34,7 +34,10 @@ import {
 import { TripForm, TripList } from "../components";
 import {
   DEFAULT_TRIP_PAGE_LIMIT,
+  TRIP_STATUS_FILTER_FETCH_LIMIT,
   buildTripPayload,
+  getTripTimeStatus,
+  getVietnamNowTimestamp,
   normalizeTripDate,
   tripStatusOptions,
   type TripFormFields,
@@ -92,19 +95,21 @@ export const TripsPage = () => {
   const startDate = searchParams.get("startDate") ?? "";
   const endDate = searchParams.get("endDate") ?? "";
   const debouncedSearch = useDebouncedValue(search);
+  const hasStatusFilter = Boolean(status);
 
   const queryParams = useMemo<QueryTripsParams>(
     () => ({
-      offset,
-      limit: DEFAULT_TRIP_PAGE_LIMIT,
+      offset: hasStatusFilter ? 0 : offset,
+      limit: hasStatusFilter
+        ? TRIP_STATUS_FILTER_FETCH_LIMIT
+        : DEFAULT_TRIP_PAGE_LIMIT,
       ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-      ...(status ? { status } : {}),
       ...(startDate
         ? { startDate: normalizeTripDate(startDate) ?? undefined }
         : {}),
       ...(endDate ? { endDate: toEndDateTime(endDate) } : {}),
     }),
-    [debouncedSearch, endDate, offset, startDate, status],
+    [debouncedSearch, endDate, hasStatusFilter, offset, startDate],
   );
   const tripsQuery = useQueryTrips(queryParams);
   const createTrip = useCreateTripAction();
@@ -130,6 +135,17 @@ export const TripsPage = () => {
           }),
     [accessMap.accessByTripId, isAccessLoading, trips],
   );
+  const statusFilteredTrips = useMemo(() => {
+    if (!status) {
+      return accessibleTrips;
+    }
+
+    const nowTimestamp = getVietnamNowTimestamp();
+
+    return accessibleTrips.filter(
+      (trip) => getTripTimeStatus(trip, nowTimestamp) === status,
+    );
+  }, [accessibleTrips, status]);
 
   const updateFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -283,16 +299,27 @@ export const TripsPage = () => {
     : accessMap.error
       ? "Trip permissions could not be fully loaded."
       : null;
-  const total = tripsPage?.total ?? 0;
+  const total = hasStatusFilter
+    ? statusFilteredTrips.length
+    : tripsPage?.total ?? 0;
   const rawLimit = tripsPage?.limit ?? DEFAULT_TRIP_PAGE_LIMIT;
-  const limit = rawLimit > 0 ? rawLimit : DEFAULT_TRIP_PAGE_LIMIT;
-  const currentOffset = tripsPage?.offset ?? offset;
+  const limit = hasStatusFilter
+    ? DEFAULT_TRIP_PAGE_LIMIT
+    : rawLimit > 0
+      ? rawLimit
+      : DEFAULT_TRIP_PAGE_LIMIT;
+  const rawCurrentOffset = hasStatusFilter ? offset : tripsPage?.offset ?? offset;
   const pageCount = Math.max(1, Math.ceil(total / limit));
+  const maxOffset = Math.max(0, (pageCount - 1) * limit);
+  const currentOffset = Math.min(rawCurrentOffset, maxOffset);
   const currentPage = Math.min(
     pageCount,
     Math.floor(currentOffset / limit) + 1,
   );
   const handlePageChange = (page: number) => updateOffset((page - 1) * limit);
+  const visibleTrips = hasStatusFilter
+    ? statusFilteredTrips.slice(currentOffset, currentOffset + limit)
+    : statusFilteredTrips;
 
   return (
     <Box component="main" sx={{ p: { xs: 2, md: 3 } }}>
@@ -431,7 +458,7 @@ export const TripsPage = () => {
           {!tripsQuery.isLoading &&
           !tripsQuery.error &&
           !isAccessLoading &&
-          accessibleTrips.length === 0 ? (
+          visibleTrips.length === 0 ? (
             <EmptyState
               icon={FlightTakeoffOutlinedIcon}
               title="Your Next Adventure Begins Here!"
@@ -440,11 +467,11 @@ export const TripsPage = () => {
             />
           ) : null}
 
-          {accessibleTrips.length > 0 ? (
+          {visibleTrips.length > 0 ? (
             <Paper variant="outlined" sx={{ overflow: "hidden" }}>
               <TripList
                 accessByTripId={accessMap.accessByTripId}
-                trips={accessibleTrips}
+                trips={visibleTrips}
                 offset={currentOffset}
                 isActionPending={deleteTrip.isPending}
                 onDelete={requestDelete}
