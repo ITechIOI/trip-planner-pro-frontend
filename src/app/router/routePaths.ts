@@ -1,3 +1,5 @@
+import { encodeTripRouteId } from './trip-route-id'
+
 export const routePaths = {
   root: '/',
   login: '/login',
@@ -18,16 +20,16 @@ export const buildProfilePath = () => '/profile'
 export const buildTripsPath = () => '/trips'
 
 export const buildTripDashboardPath = (tripId: number) =>
-  `/trips/${tripId}/dashboard`
+  `/trips/${encodeTripRouteId(tripId)}/dashboard`
 
 export const buildTripItineraryPath = (tripId: number) =>
-  `/trips/${tripId}/itinerary`
+  `/trips/${encodeTripRouteId(tripId)}/itinerary`
 
 export const buildTripMembersPath = (tripId: number) =>
-  `/trips/${tripId}/members`
+  `/trips/${encodeTripRouteId(tripId)}/members`
 
 export const buildTripPackingPath = (tripId: number) =>
-  `/trips/${tripId}/packing`
+  `/trips/${encodeTripRouteId(tripId)}/packing`
 
 export const buildTripBudgetPath = (tripId: number) =>
-  `/trips/${tripId}/budget`
+  `/trips/${encodeTripRouteId(tripId)}/budget`
