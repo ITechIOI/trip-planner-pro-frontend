@@ -5,7 +5,7 @@ import {
   type TripStatusFilterParameter as TripStatusFilter,
 } from '@/shared'
 
-export const DEFAULT_TRIP_PAGE_LIMIT = 6
+export const DEFAULT_TRIP_PAGE_LIMIT = 10
 
 export type TripStatusFilterValue = '' | TripStatusFilter
 

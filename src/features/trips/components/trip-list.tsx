@@ -108,14 +108,16 @@ export const TripList = ({
               </Box>
 
               <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<LaunchOutlinedIcon />}
-                  onClick={() => onOpen(trip)}
-                >
-                  Open
-                </Button>
+                {access?.canViewResources ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<LaunchOutlinedIcon />}
+                    onClick={() => onOpen(trip)}
+                  >
+                    Open
+                  </Button>
+                ) : null}
                 {access?.canViewMembers ? (
                   <Button
                     size="small"
@@ -213,13 +215,15 @@ export const TripList = ({
                     spacing={0.5}
                     sx={{ justifyContent: "center" }}
                   >
-                    <IconButton
-                      size="small"
-                      aria-label="Open trip"
-                      onClick={() => onOpen(trip)}
-                    >
-                      <LaunchOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    {access?.canViewResources ? (
+                      <IconButton
+                        size="small"
+                        aria-label="Open trip"
+                        onClick={() => onOpen(trip)}
+                      >
+                        <LaunchOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    ) : null}
                     {access?.canViewMembers ? (
                       <IconButton
                         size="small"

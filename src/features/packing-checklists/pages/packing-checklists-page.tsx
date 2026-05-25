@@ -53,7 +53,7 @@ type PackingChecklistsPageProps = {
   tripId: number;
 };
 
-const DEFAULT_PACKING_PAGE_LIMIT = 6;
+const DEFAULT_PACKING_PAGE_LIMIT = 10;
 const PACKING_PROGRESS_ITEM_LIMIT = 1000;
 
 type PackingConfirmAction =
