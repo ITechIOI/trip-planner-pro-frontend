@@ -6,6 +6,7 @@ import {
   PlaceholderPage,
   TripDashboardPage,
 } from '@/features/itineraries'
+import { PackingChecklistsPage } from '@/features/packing-checklists'
 import { TripMembersPage } from '@/features/trip-members'
 import { TripsPage } from '@/features/trips'
 import { DashboardPage, ProfilePage } from '@/pages'
@@ -57,13 +58,7 @@ const TripMembersRoute = () => {
 const TripPackingRoute = () => {
   return (
     <TripRouteRenderer>
-      {(tripId) => (
-        <PlaceholderPage
-          tripId={tripId}
-          title="Packing"
-          description="Packing checklist management will be available in this workspace."
-        />
-      )}
+      {(tripId) => <PackingChecklistsPage tripId={tripId} />}
     </TripRouteRenderer>
   )
 }
