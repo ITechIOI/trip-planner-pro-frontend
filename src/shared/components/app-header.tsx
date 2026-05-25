@@ -5,6 +5,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Avatar from "@mui/material/Avatar";
@@ -118,11 +119,13 @@ export const AppHeader = () => {
   const selectedTripId = parseTripIdParam(tripId);
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
   const isTripAlertsDismissed = useAppUiStore((state) =>
     selectedTripId ? Boolean(state.dismissedTripAlertIds[selectedTripId]) : false,
   );
   const dismissTripAlerts = useAppUiStore((state) => state.dismissTripAlerts);
+  const resetAppUiState = useAppUiStore((state) => state.resetAppUiState);
 
   const currentUserQuery = useCurrentUser();
   const tripsQuery = useTrips({
@@ -178,8 +181,11 @@ export const AppHeader = () => {
     );
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    await queryClient.cancelQueries();
     clearAccessToken();
+    queryClient.removeQueries();
+    resetAppUiState();
     navigate(routePaths.login, { replace: true });
   };
 

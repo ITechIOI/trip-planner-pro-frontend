@@ -13,10 +13,13 @@ import { EmptyState } from "@/shared/components/empty-state";
 import { useTrip } from "@/features/trips/api/use-trip-action";
 import { useTripAccess } from "@/features/trips/api/use-trip-access";
 import { getTripsErrorMessage } from "@/features/trips/lib/trips-error";
+import { OWNER_TRIP_ROLE } from "@/features/trips/lib/trip-access";
+import { useUser } from "@/features/users/api/use-user-action";
 import FilterListOutlinedIcon from "@mui/icons-material/FilterListOutlined";
 import {
   TripMemberForm,
   TripMemberList,
+  type TripMemberListItem,
   type TripMemberFormValues,
 } from "../components";
 import {
@@ -34,6 +37,8 @@ import {
   type TripMemberPageResponse,
   type TripMemberResponse,
   type TripMemberRole as TripMemberRoleValue,
+  type TripResponse,
+  type UserResponse,
   type UpdateTripMemberRoleMutationError,
 } from "@/shared";
 
@@ -46,12 +51,12 @@ const DEFAULT_MEMBER_LIMIT = 10;
 type MemberConfirmAction =
   | {
       type: "role";
-      member: TripMemberResponse;
+      member: TripMemberListItem;
       role: TripMemberRoleValue;
     }
   | {
       type: "delete";
-      member: TripMemberResponse;
+      member: TripMemberListItem;
     };
 
 export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
@@ -62,6 +67,11 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const tripQuery = useTrip(tripId);
+  const trip = tripQuery.data as TripResponse | undefined;
+  const ownerId = trip?.ownerId;
+  const ownerQuery = useUser(ownerId ?? 0, {
+    query: { enabled: Boolean(ownerId) },
+  });
   const access = useTripAccess(tripId);
   const membersParams = useMemo(
     () => ({
@@ -77,9 +87,29 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
   const updateRole = useUpdateTripMemberRoleAction();
   const deleteMember = useDeleteTripMemberAction();
   const membersPage = membersQuery.data as TripMemberPageResponse | undefined;
+  const currentOffset = membersPage?.offset ?? offset;
   const members = useMemo(
     () => (membersPage?.items ?? []) as TripMemberResponse[],
     [membersPage],
+  );
+  const ownerMember = useMemo<TripMemberListItem | null>(() => {
+    if (!ownerId) {
+      return null;
+    }
+
+    return {
+      userId: ownerId,
+      tripId,
+      role: OWNER_TRIP_ROLE,
+      user: ownerQuery.data as UserResponse | undefined,
+    };
+  }, [ownerId, ownerQuery.data, tripId]);
+  const displayedMembers = useMemo<TripMemberListItem[]>(
+    () =>
+      ownerMember && currentOffset === 0
+        ? [ownerMember, ...members]
+        : members,
+    [currentOffset, members, ownerMember],
   );
   const clearFeedback = () => {
     setFormError(null);
@@ -120,7 +150,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
   };
 
   const handleRoleChange = (
-    member: TripMemberResponse,
+    member: TripMemberListItem,
     role: TripMemberRoleValue,
   ) => {
     clearFeedback();
@@ -138,7 +168,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
   };
 
   const confirmRoleChange = (
-    member: TripMemberResponse,
+    member: TripMemberListItem,
     role: TripMemberRoleValue,
   ) => {
     if (!member.id) {
@@ -167,7 +197,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
     );
   };
 
-  const handleDelete = (member: TripMemberResponse) => {
+  const handleDelete = (member: TripMemberListItem) => {
     clearFeedback();
 
     if (!access.canManageMembers) {
@@ -182,7 +212,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
     setConfirmAction({ type: "delete", member });
   };
 
-  const confirmDelete = (member: TripMemberResponse) => {
+  const confirmDelete = (member: TripMemberListItem) => {
     if (!member.id) {
       setConfirmAction(null);
       return;
@@ -237,7 +267,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
       : null;
   const limit = membersPage?.limit ?? DEFAULT_MEMBER_LIMIT;
   const total = membersPage?.total ?? 0;
-  const currentOffset = membersPage?.offset ?? offset;
+  const displayedTotal = ownerMember ? total + 1 : total;
   const isActionPending =
     addMember.isPending || updateRole.isPending || deleteMember.isPending;
 
@@ -277,9 +307,9 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
 
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <FilterListOutlinedIcon fontSize="small" color="action" />
-          {total > 0 ? (
+          {displayedTotal > 0 ? (
             <Typography color="text.secondary" variant="body2">
-              Showing {members.length} of {total} members
+              Showing {displayedMembers.length} of {displayedTotal} members
             </Typography>
           ) : null}
         </Stack>
@@ -290,7 +320,7 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
 
         {!membersQuery.isLoading &&
         !membersQuery.error &&
-        members.length === 0 ? (
+        displayedMembers.length === 0 ? (
           <EmptyState
             icon={GroupOutlinedIcon}
             title="No members yet"
@@ -302,11 +332,11 @@ export const TripMembersPage = ({ tripId }: TripMembersPageProps) => {
           />
         ) : null}
 
-        {members.length > 0 ? (
+        {displayedMembers.length > 0 ? (
           <TripMemberList
             canManageMembers={access.canManageMembers}
             isActionPending={isActionPending}
-            members={members}
+            members={displayedMembers}
             offset={currentOffset}
             onDelete={handleDelete}
             onRoleChange={handleRoleChange}

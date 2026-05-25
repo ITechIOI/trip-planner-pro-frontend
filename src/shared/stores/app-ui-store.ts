@@ -4,6 +4,7 @@ type AppUiState = {
   dismissedTripAlertIds: Record<number, true>
   dismissTripAlerts: (tripId: number) => void
   resetTripAlerts: (tripId: number) => void
+  resetAppUiState: () => void
 }
 
 export const useAppUiStore = create<AppUiState>((set) => ({
@@ -22,4 +23,5 @@ export const useAppUiStore = create<AppUiState>((set) => ({
 
       return { dismissedTripAlertIds }
     }),
+  resetAppUiState: () => set({ dismissedTripAlertIds: {} }),
 }))

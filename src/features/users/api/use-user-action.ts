@@ -1,8 +1,6 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query'
-import {
-  invalidateFeatureQueries,
-  removeFeatureQueries,
-} from '@/shared/lib'
+import { invalidateFeatureQueries } from '@/shared/lib'
+import { useAppUiStore } from '@/shared/stores'
 import {
   clearAccessToken,
   type UserResponse,
@@ -71,8 +69,10 @@ export const useDeleteCurrentUserAction = (
           onMutateResult,
           context,
         )
+        await queryClient.cancelQueries()
         clearAccessToken()
-        removeFeatureQueries(queryClient, usersQueryKeys.affectedCurrentUser())
+        queryClient.removeQueries()
+        useAppUiStore.getState().resetAppUiState()
       },
     },
   })

@@ -19,19 +19,29 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import {
+  getTripAccessColor,
+  getTripAccessLabel,
+  OWNER_TRIP_ROLE,
+  type TripAccessRole,
+} from "@/features/trips/lib/trip-access";
+import {
   TripMemberRole,
   type TripMemberResponse,
   type TripMemberRole as TripMemberRoleValue,
   type UserResponse,
 } from "@/shared";
 
+export type TripMemberListItem = Omit<TripMemberResponse, "role"> & {
+  role?: TripAccessRole;
+};
+
 export type TripMemberListProps = {
   canManageMembers: boolean;
   isActionPending?: boolean;
-  members: TripMemberResponse[];
+  members: TripMemberListItem[];
   offset?: number;
-  onDelete: (member: TripMemberResponse) => void;
-  onRoleChange: (member: TripMemberResponse, role: TripMemberRoleValue) => void;
+  onDelete: (member: TripMemberListItem) => void;
+  onRoleChange: (member: TripMemberListItem, role: TripMemberRoleValue) => void;
 };
 
 type UserWithOptionalName = UserResponse & { name?: string };
@@ -47,14 +57,14 @@ const getInitials = (title: string) => {
   return initials || "TM";
 };
 
-const getMemberDisplay = (member: TripMemberResponse) => {
+const getMemberDisplay = (member: TripMemberListItem) => {
   const user = member.user as UserWithOptionalName | undefined;
   const title =
     user?.fullName ||
     user?.name ||
     user?.username ||
     user?.email ||
-    "Trip member";
+    (member.role === OWNER_TRIP_ROLE ? "Trip owner" : "Trip member");
   const detail = user?.email && user.email !== title ? user.email : "";
 
   return {
@@ -64,8 +74,11 @@ const getMemberDisplay = (member: TripMemberResponse) => {
   };
 };
 
-const getRoleLabel = (role?: TripMemberRoleValue) =>
-  role === TripMemberRole.EDIT ? "Editor" : "Viewer";
+const isOwnerMember = (member: TripMemberListItem) =>
+  member.role === OWNER_TRIP_ROLE;
+
+const getDisplayRole = (member: TripMemberListItem): TripAccessRole =>
+  member.role ?? TripMemberRole.VIEW;
 
 export const TripMemberList = ({
   canManageMembers,
@@ -83,6 +96,8 @@ export const TripMemberList = ({
       <Stack spacing={1.5}>
         {members.map((member, index) => {
           const display = getMemberDisplay(member);
+          const isOwner = isOwnerMember(member);
+          const displayRole = getDisplayRole(member);
 
           return (
             <Paper
@@ -124,7 +139,7 @@ export const TripMemberList = ({
               </Stack>
 
               <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                {canManageMembers ? (
+                {canManageMembers && !isOwner ? (
                   <FormControl size="small" sx={{ minWidth: 140 }}>
                     <InputLabel>Role</InputLabel>
                     <Select
@@ -145,13 +160,11 @@ export const TripMemberList = ({
                 ) : (
                   <Chip
                     size="small"
-                    color={
-                      member.role === TripMemberRole.EDIT ? "warning" : "info"
-                    }
-                    label={getRoleLabel(member.role)}
+                    color={getTripAccessColor(displayRole)}
+                    label={getTripAccessLabel(displayRole)}
                   />
                 )}
-                {canManageMembers && member.id ? (
+                {canManageMembers && !isOwner && member.id ? (
                   <IconButton
                     type="button"
                     color="error"
@@ -194,6 +207,8 @@ export const TripMemberList = ({
         <TableBody>
           {members.map((member, index) => {
             const display = getMemberDisplay(member);
+            const isOwner = isOwnerMember(member);
+            const displayRole = getDisplayRole(member);
 
             return (
               <TableRow key={member.id ?? `${member.userId}-${index}`}>
@@ -236,7 +251,7 @@ export const TripMemberList = ({
                   </Stack>
                 </TableCell>
                 <TableCell align="center">
-                  {canManageMembers ? (
+                  {canManageMembers && !isOwner ? (
                     <FormControl size="small" sx={{ minWidth: 140 }}>
                       <InputLabel>Role</InputLabel>
                       <Select
@@ -257,16 +272,14 @@ export const TripMemberList = ({
                   ) : (
                     <Chip
                       size="small"
-                      color={
-                        member.role === TripMemberRole.EDIT ? "warning" : "info"
-                      }
-                      label={getRoleLabel(member.role)}
+                      color={getTripAccessColor(displayRole)}
+                      label={getTripAccessLabel(displayRole)}
                     />
                   )}
                 </TableCell>
                 {canManageMembers ? (
                   <TableCell align="center">
-                    {member.id ? (
+                    {!isOwner && member.id ? (
                       <IconButton
                         type="button"
                         size="small"

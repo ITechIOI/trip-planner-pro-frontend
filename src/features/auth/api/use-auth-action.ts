@@ -3,6 +3,9 @@ import type {
   RegisterMutationError,
   ResetPasswordByEmailMutationError,
 } from "@/shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { clearAuthenticatedQueryCache } from "@/shared/lib";
+import { useAppUiStore } from "@/shared/stores";
 import {
   setAccessToken,
   useLogin,
@@ -23,11 +26,15 @@ type UseResetPasswordByEmailActionOptions<TContext = unknown> = Parameters<
 export const useLoginAction = <TContext = unknown>(
   options?: UseLoginActionOptions<TContext>,
 ) => {
+  const queryClient = useQueryClient();
+
   return useLogin<LoginMutationError, TContext>({
     ...options,
     mutation: {
       ...options?.mutation,
       onSuccess: async (data, variables, onMutateResult, context) => {
+        await clearAuthenticatedQueryCache(queryClient);
+        useAppUiStore.getState().resetAppUiState();
         setAccessToken(data.accessToken);
         await options?.mutation?.onSuccess?.(
           data,
@@ -43,11 +50,15 @@ export const useLoginAction = <TContext = unknown>(
 export const useRegisterAction = <TContext = unknown>(
   options?: UseRegisterActionOptions<TContext>,
 ) => {
+  const queryClient = useQueryClient();
+
   return useRegister<RegisterMutationError, TContext>({
     ...options,
     mutation: {
       ...options?.mutation,
       onSuccess: async (data, variables, onMutateResult, context) => {
+        await clearAuthenticatedQueryCache(queryClient);
+        useAppUiStore.getState().resetAppUiState();
         setAccessToken(data.accessToken);
         await options?.mutation?.onSuccess?.(
           data,

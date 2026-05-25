@@ -54,6 +54,7 @@ type PackingChecklistsPageProps = {
 };
 
 const DEFAULT_PACKING_PAGE_LIMIT = 6;
+const PACKING_PROGRESS_ITEM_LIMIT = 1000;
 
 type PackingConfirmAction =
   | { type: "delete"; item: PackingItem }
@@ -106,6 +107,13 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
     }),
     [categoryFilter, normalizedSearch, offset, packedFilter],
   );
+  const progressQueryParams = useMemo<QueryTripPackingChecklistsParams>(
+    () => ({
+      offset: 0,
+      limit: PACKING_PROGRESS_ITEM_LIMIT,
+    }),
+    [],
+  );
 
   const access = useTripAccess(tripId);
   const dashboardQuery = useTripDashboard(tripId);
@@ -115,6 +123,16 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
       placeholderData: keepPreviousData,
     },
   });
+  const packingProgressQuery = useQueryTripPackingChecklists(
+    tripId,
+    progressQueryParams,
+    {
+      query: {
+        enabled: Boolean(tripId),
+        placeholderData: keepPreviousData,
+      },
+    },
+  );
   const createItemAction = useCreatePackingChecklistAction();
   const deleteItemAction = useDeletePackingChecklistAction();
   const updateItemAction = useUpdatePackingChecklistAction();
@@ -133,6 +151,16 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
         .map(normalizePackingItemFromApi)
         .filter((item): item is PackingItem => item != null),
     [packingPage],
+  );
+  const progressPage = packingProgressQuery.data as
+    | PackingChecklistPageResponse
+    | undefined;
+  const progressItems = useMemo(
+    () =>
+      ((progressPage?.items ?? []) as PackingChecklistResponse[])
+        .map(normalizePackingItemFromApi)
+        .filter((item): item is PackingItem => item != null),
+    [progressPage],
   );
   const groupedItems = useMemo(() => groupItemsByCategory(items), [items]);
   const dashboard = dashboardQuery.data as TripDashboardResponse | undefined;
@@ -417,7 +445,7 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
         />
       </Paper>
 
-      <PackingCategoryProgress items={items} />
+      <PackingCategoryProgress items={progressItems} />
 
       {isInitialLoading ? (
         <Typography color="text.secondary">Loading packing items...</Typography>

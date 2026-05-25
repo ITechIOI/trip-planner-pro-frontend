@@ -17,3 +17,10 @@ export const removeFeatureQueries = (
     queryClient.removeQueries({ queryKey });
   });
 };
+
+export const clearAuthenticatedQueryCache = async (
+  queryClient: QueryClient,
+) => {
+  await queryClient.cancelQueries();
+  queryClient.removeQueries();
+};
