@@ -6,6 +6,20 @@ import {
 } from '@/shared'
 
 export const DEFAULT_TRIP_PAGE_LIMIT = 10
+export const TRIP_STATUS_FILTER_FETCH_LIMIT = 50
+
+const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+const vietnamDateTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: VIETNAM_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+})
 
 export type TripStatusFilterValue = '' | TripStatusFilter
 
@@ -27,6 +41,84 @@ export const tripStatusOptions: {
   { value: TripStatusFilterParameter.in_progress, label: 'In Progress' },
   { value: TripStatusFilterParameter.done, label: 'Completed' },
 ]
+
+const getDatePart = (parts: Intl.DateTimeFormatPart[], type: string) =>
+  Number(parts.find((part) => part.type === type)?.value ?? 0)
+
+export const getVietnamNowTimestamp = () => {
+  const parts = vietnamDateTimeFormatter.formatToParts(new Date())
+
+  return Date.UTC(
+    getDatePart(parts, 'year'),
+    getDatePart(parts, 'month') - 1,
+    getDatePart(parts, 'day'),
+    getDatePart(parts, 'hour'),
+    getDatePart(parts, 'minute'),
+    getDatePart(parts, 'second'),
+  )
+}
+
+const parseTripDateTimestamp = (
+  value?: string | null,
+  options: { endOfDay?: boolean } = {},
+) => {
+  if (!value) {
+    return null
+  }
+
+  const match = String(value)
+    .trim()
+    .match(
+      /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+    )
+
+  if (!match) {
+    return null
+  }
+
+  const hasTime = match[4] != null
+  const hour = Number(match[4] ?? 0)
+  const minute = Number(match[5] ?? 0)
+  const second = Number(match[6] ?? 0)
+  const shouldUseEndOfDay =
+    options.endOfDay && (!hasTime || (hour === 0 && minute === 0 && second === 0))
+
+  return Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+    shouldUseEndOfDay ? 23 : hour,
+    shouldUseEndOfDay ? 59 : minute,
+    shouldUseEndOfDay ? 59 : second,
+  )
+}
+
+export const getTripTimeStatus = (
+  trip: Pick<TripResponse, 'startDate' | 'endDate'>,
+  nowTimestamp = getVietnamNowTimestamp(),
+): TripStatusFilter | null => {
+  const startTimestamp = parseTripDateTimestamp(trip.startDate)
+  const endTimestamp = parseTripDateTimestamp(trip.endDate, { endOfDay: true })
+
+  if (endTimestamp != null && endTimestamp < nowTimestamp) {
+    return TripStatusFilterParameter.done
+  }
+
+  if (startTimestamp != null && startTimestamp > nowTimestamp) {
+    return TripStatusFilterParameter.to_do
+  }
+
+  if (
+    startTimestamp != null &&
+    endTimestamp != null &&
+    startTimestamp <= nowTimestamp &&
+    endTimestamp >= nowTimestamp
+  ) {
+    return TripStatusFilterParameter.in_progress
+  }
+
+  return null
+}
 
 export const toDateInputValue = (value?: string | null) => {
   if (!value) {
