@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { LoginPage, RecoverPasswordPage, SignUpPage } from '@/features/auth'
 import { BudgetPage } from '@/features/budgets'
@@ -11,6 +11,7 @@ import { hasValidAccessToken } from '@/shared'
 import { AuthenticatedLayout } from '@/shared/components'
 import { ProtectedRoute } from './ProtectedRoute'
 import { routePaths } from './routePaths'
+import { encodeTripRouteId } from './trip-route-id'
 import { parseTripIdParam, type TripRouteParams } from './trip-route-params'
 
 type TripRouteRendererProps = {
@@ -19,10 +20,27 @@ type TripRouteRendererProps = {
 
 const TripRouteRenderer = ({ children }: TripRouteRendererProps) => {
   const { tripId } = useParams<TripRouteParams>()
+  const location = useLocation()
   const parsedTripId = parseTripIdParam(tripId)
 
   if (parsedTripId == null) {
     return <Navigate to={routePaths.trips} replace />
+  }
+
+  const canonicalTripId = encodeTripRouteId(parsedTripId)
+
+  if (tripId !== canonicalTripId) {
+    const canonicalPathname = location.pathname.replace(
+      /\/trips\/[^/]+/,
+      `/trips/${canonicalTripId}`,
+    )
+
+    return (
+      <Navigate
+        to={`${canonicalPathname}${location.search}${location.hash}`}
+        replace
+      />
+    )
   }
 
   return <>{children(parsedTripId)}</>
