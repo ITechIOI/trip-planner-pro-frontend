@@ -54,7 +54,7 @@ type PackingChecklistsPageProps = {
 };
 
 const DEFAULT_PACKING_PAGE_LIMIT = 10;
-const PACKING_PROGRESS_ITEM_LIMIT = 1000;
+const PACKING_PROGRESS_ITEM_LIMIT = 50;
 
 type PackingConfirmAction =
   | { type: "delete"; item: PackingItem }
@@ -162,6 +162,10 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
         .filter((item): item is PackingItem => item != null),
     [progressPage],
   );
+  const categoryProgressItems =
+    packingProgressQuery.isError || (!progressPage && items.length > 0)
+      ? items
+      : progressItems;
   const groupedItems = useMemo(() => groupItemsByCategory(items), [items]);
   const dashboard = dashboardQuery.data as TripDashboardResponse | undefined;
   const dashboardPackingProgress = dashboard?.packingProgress;
@@ -445,7 +449,7 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
         />
       </Paper>
 
-      <PackingCategoryProgress items={progressItems} />
+      <PackingCategoryProgress items={categoryProgressItems} />
 
       {isInitialLoading ? (
         <Typography color="text.secondary">Loading packing items...</Typography>
