@@ -12,6 +12,7 @@ import packingIcon from "@/assets/images/packing.png";
 import { AppLayout } from "@/shared/components/app-layout";
 import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
+import { filterPanelSx } from "@/shared/components/filter-panel";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
 import { useDebouncedValue } from "@/shared/lib";
 import { useTripAccess } from "@/features/trips/api/use-trip-access";
@@ -405,7 +406,7 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
         <Alert severity="error">{pageErrorMessage ?? actionError}</Alert>
       ) : null}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={filterPanelSx}>
         <PackingFilters
           searchTerm={searchTerm}
           categoryFilter={categoryFilter}

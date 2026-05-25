@@ -58,6 +58,7 @@ import type {
   UserResponse,
 } from "@/shared";
 import { clearAccessToken } from "@/shared";
+import { useAppUiStore } from "@/shared/stores";
 
 const TRIP_SELECTOR_LIMIT = 50;
 const MANAGE_TRIPS_VALUE = "__manage_trips";
@@ -117,8 +118,11 @@ export const AppHeader = () => {
   const selectedTripId = parseTripIdParam(tripId);
   const location = useLocation();
   const navigate = useNavigate();
-  const [showAlerts, setShowAlerts] = useState(true);
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null);
+  const isTripAlertsDismissed = useAppUiStore((state) =>
+    selectedTripId ? Boolean(state.dismissedTripAlertIds[selectedTripId]) : false,
+  );
+  const dismissTripAlerts = useAppUiStore((state) => state.dismissTripAlerts);
 
   const currentUserQuery = useCurrentUser();
   const tripsQuery = useTrips({
@@ -159,6 +163,7 @@ export const AppHeader = () => {
     (stats.hasOverdueActivities ||
       stats.isBudgetWarning ||
       stats.isBudgetCritical);
+  const shouldShowAlerts = hasAlerts && !isTripAlertsDismissed;
   const selectedTripValue = selectedTripId ? String(selectedTripId) : "";
 
   const handleTripChange = (event: SelectChangeEvent) => {
@@ -199,10 +204,13 @@ export const AppHeader = () => {
       sx={{
         position: "sticky",
         top: 0,
-        zIndex: 50,
-        bgcolor: "background.paper",
+        zIndex: (theme) => theme.zIndex.appBar,
+        background:
+          "linear-gradient(90deg, #eaf3ff 0%, #f6faff 52%, #edf5ff 100%)",
         borderBottom: 1,
-        borderColor: "divider",
+        borderColor: "rgba(18, 132, 248, 0.18)",
+        boxShadow: "0 12px 34px rgba(15, 23, 42, 0.12)",
+        isolation: "isolate",
       }}
     >
       {errorMessage ? (
@@ -242,9 +250,20 @@ export const AppHeader = () => {
                 component="img"
                 src={tripIcon}
                 alt="Trips"
-                sx={{ width: 44, height: 44 }}
+                sx={{ width: 52, height: 52 }}
               />
-              <span>Trips</span>
+              <Typography
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: 1.1,
+                  textTransform: "uppercase",
+                  color: "primary.dark",
+                  fontSize: 16,
+                }}
+              >
+                Trips
+              </Typography>
             </Stack>
           </Button>
         </Box>
@@ -340,10 +359,10 @@ export const AppHeader = () => {
               <Avatar
                 src={currentUser.avatarUrl}
                 alt={currentUser.fullName ?? currentUser.username ?? "User"}
-                sx={{ width: 32, height: 32 }}
+                sx={{ width: 44, height: 44 }}
               />
             ) : (
-              <Avatar sx={{ width: 32, height: 32, fontSize: 13 }}>
+              <Avatar sx={{ width: 44, height: 44, fontSize: 16 }}>
                 {getInitials(currentUser?.fullName ?? currentUser?.username)}
               </Avatar>
             )}
@@ -371,7 +390,7 @@ export const AppHeader = () => {
         </Box>
       </Box>
 
-      {showAlerts && hasAlerts ? (
+      {shouldShowAlerts ? (
         <Alert
           severity={stats.isBudgetCritical ? "error" : "warning"}
           icon={
@@ -382,7 +401,14 @@ export const AppHeader = () => {
             )
           }
           action={
-            <IconButton size="small" onClick={() => setShowAlerts(false)}>
+            <IconButton
+              size="small"
+              onClick={() => {
+                if (selectedTripId) {
+                  dismissTripAlerts(selectedTripId);
+                }
+              }}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           }

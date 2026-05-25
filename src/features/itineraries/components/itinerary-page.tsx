@@ -8,6 +8,7 @@ import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
+import Paper from "@mui/material/Paper";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -36,6 +37,7 @@ import type {
 import { AppLayout } from "@/shared/components/app-layout";
 import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
+import { filterPanelSx } from "@/shared/components/filter-panel";
 import { ProgressRing } from "@/shared/components/progress-ring";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
 import { useDebouncedValue } from "@/shared/lib";
@@ -657,104 +659,108 @@ const ItineraryContent = ({
         />
       ) : (
         <Stack spacing={2.5}>
-          <Stack
-            direction={{ xs: "column", lg: "row" }}
-            spacing={2}
-            sx={{
-              alignItems: { lg: "center" },
-              justifyContent: { lg: "space-between" },
-              width: "100%",
-            }}
-          >
-            <TextField
-              size="small"
-              placeholder="Search activities by name"
-              value={searchQuery}
-              onChange={(event) => handleSearchQueryChange(event.target.value)}
-              sx={{
-                width: { xs: "100%", lg: 420 },
-                flexShrink: 0,
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" color="action" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-
+          <Paper variant="outlined" sx={filterPanelSx}>
             <Stack
-              direction="row"
-              spacing={1}
+              direction={{ xs: "column", lg: "row" }}
+              spacing={2}
               sx={{
-                flex: { lg: 1 },
-                flexWrap: "wrap",
-                justifyContent: { lg: "flex-end" },
-                width: { xs: "100%", lg: "auto" },
+                alignItems: { lg: "center" },
+                justifyContent: { lg: "space-between" },
+                width: "100%",
               }}
-              useFlexGap
             >
-              <FilterSelect
-                label="Category"
-                value={filterCategory}
-                onChange={handleCategoryFilterChange}
-                options={[
-                  { value: "", label: "All Categories" },
-                  ...ITINERARY_CATEGORIES.map((category) => ({
-                    value: category,
-                    label: category,
-                  })),
-                ]}
-              />
-              <FilterSelect
-                label="Status"
-                value={filterStatus}
-                onChange={handleStatusFilterChange}
-                options={[
-                  { value: "", label: "All Status" },
-                  ...ITINERARY_STATUSES.map((status) => ({
-                    value: status,
-                    label: status,
-                  })),
-                ]}
-              />
-              <FilterSelect
-                label="Priority"
-                value={filterPriority}
-                onChange={handlePriorityFilterChange}
-                options={[
-                  { value: "", label: "All Priorities" },
-                  ...ITINERARY_PRIORITIES.map((priority) => ({
-                    value: priority,
-                    label: priority,
-                  })),
-                ]}
-              />
               <TextField
-                label="Date"
-                type="date"
                 size="small"
-                value={filterDate}
-                onChange={(event) => handleDateFilterChange(event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: 160 }}
+                placeholder="Search activities by name"
+                value={searchQuery}
+                onChange={(event) => handleSearchQueryChange(event.target.value)}
+                sx={{
+                  width: { xs: "100%", lg: 420 },
+                  flexShrink: 0,
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" color="action" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
 
-              {hasActiveFilters ? (
-                <Button
-                  variant="text"
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  flex: { lg: 1 },
+                  flexWrap: "wrap",
+                  justifyContent: { lg: "flex-end" },
+                  width: { xs: "100%", lg: "auto" },
+                }}
+                useFlexGap
+              >
+                <FilterSelect
+                  label="Category"
+                  value={filterCategory}
+                  onChange={handleCategoryFilterChange}
+                  options={[
+                    { value: "", label: "All Categories" },
+                    ...ITINERARY_CATEGORIES.map((category) => ({
+                      value: category,
+                      label: category,
+                    })),
+                  ]}
+                />
+                <FilterSelect
+                  label="Status"
+                  value={filterStatus}
+                  onChange={handleStatusFilterChange}
+                  options={[
+                    { value: "", label: "All Status" },
+                    ...ITINERARY_STATUSES.map((status) => ({
+                      value: status,
+                      label: status,
+                    })),
+                  ]}
+                />
+                <FilterSelect
+                  label="Priority"
+                  value={filterPriority}
+                  onChange={handlePriorityFilterChange}
+                  options={[
+                    { value: "", label: "All Priorities" },
+                    ...ITINERARY_PRIORITIES.map((priority) => ({
+                      value: priority,
+                      label: priority,
+                    })),
+                  ]}
+                />
+                <TextField
+                  label="Date"
+                  type="date"
                   size="small"
-                  startIcon={<ClearIcon />}
-                  onClick={clearFilters}
-                >
-                  Clear
-                </Button>
-              ) : null}
+                  value={filterDate}
+                  onChange={(event) =>
+                    handleDateFilterChange(event.target.value)
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ width: 160 }}
+                />
+
+                {hasActiveFilters ? (
+                  <Button
+                    variant="text"
+                    size="small"
+                    startIcon={<ClearIcon />}
+                    onClick={clearFilters}
+                  >
+                    Clear
+                  </Button>
+                ) : null}
+              </Stack>
             </Stack>
-          </Stack>
+          </Paper>
 
           {isInitialListLoading ? (
             <Typography variant="body2" color="text.secondary">

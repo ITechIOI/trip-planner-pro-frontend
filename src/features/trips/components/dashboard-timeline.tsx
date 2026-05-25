@@ -28,6 +28,16 @@ const hasTimelineItems = (dashboard: TripDashboardResponse) =>
     (group) => (group.items?.length ?? 0) > 0,
   ) ?? false;
 
+const formatTimelineDate = (value?: string | null) => {
+  const formatted = formatDashboardDate(value);
+
+  if (formatted === "No date") {
+    return formatted;
+  }
+
+  return formatted.replace(",", " -");
+};
+
 const TimelineItem = ({
   item,
   index,
@@ -172,14 +182,15 @@ export const DashboardTimeline = ({
               >
                 <Typography
                   component="h3"
-                  color="text.secondary"
                   sx={{
                     fontSize: 13,
                     fontWeight: 800,
                     textTransform: "uppercase",
+                    letterSpacing: 0.8,
+                    color: "primary.light",
                   }}
                 >
-                  {formatDashboardDate(group.date)}
+                  {formatTimelineDate(group.date)}
                 </Typography>
                 <Stack spacing={1} sx={{ mt: 1 }}>
                   {items.map((item, index) => (

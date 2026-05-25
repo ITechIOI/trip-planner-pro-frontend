@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react'
 import { AppLayout } from '@/shared/components/app-layout'
 import { ConfirmActionDialog } from '@/shared/components/confirm-action-dialog'
 import { EmptyState } from '@/shared/components/empty-state'
+import { filterPanelSx } from '@/shared/components/filter-panel'
 import { TablePaginationToolbar } from '@/shared/components/table-pagination-toolbar'
 import { invalidateFeatureQueries, useDebouncedValue } from '@/shared/lib'
 import {
@@ -475,24 +476,26 @@ const BudgetContent = ({ tripId }: BudgetPageProps) => {
 
           <CategoryTotalsPanel byCategory={byCategory} />
 
-          <BudgetFilters
-            categoryFilter={categoryFilter}
-            search={search}
-            statusFilter={statusFilter}
-            onCategoryChange={(value) => {
-              setCategoryFilter(value)
-              resetOffset()
-            }}
-            onClearFilters={clearFilters}
-            onSearchChange={(value) => {
-              setSearch(value)
-              resetOffset()
-            }}
-            onStatusChange={(value) => {
-              setStatusFilter(value)
-              resetOffset()
-            }}
-          />
+          <Paper variant="outlined" sx={filterPanelSx}>
+            <BudgetFilters
+              categoryFilter={categoryFilter}
+              search={search}
+              statusFilter={statusFilter}
+              onCategoryChange={(value) => {
+                setCategoryFilter(value)
+                resetOffset()
+              }}
+              onClearFilters={clearFilters}
+              onSearchChange={(value) => {
+                setSearch(value)
+                resetOffset()
+              }}
+              onStatusChange={(value) => {
+                setStatusFilter(value)
+                resetOffset()
+              }}
+            />
+          </Paper>
 
           {budgetsQuery.isFetching && budgetsQuery.data ? (
             <Typography color="text.secondary" sx={{ fontSize: 13 }}>

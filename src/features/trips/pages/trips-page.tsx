@@ -21,6 +21,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { buildTripDashboardPath, buildTripMembersPath } from "@/app/router";
 import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
+import { filterPanelSx } from "@/shared/components/filter-panel";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
 import { useDebouncedValue } from "@/shared/lib";
 import {
@@ -318,7 +319,7 @@ export const TripsPage = () => {
             </Button>
           </Stack>
 
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={filterPanelSx}>
             <Stack
               direction={{ xs: "column", lg: "row" }}
               spacing={2}
