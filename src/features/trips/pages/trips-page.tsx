@@ -435,7 +435,7 @@ export const TripsPage = () => {
             <EmptyState
               icon={FlightTakeoffOutlinedIcon}
               title="Your Next Adventure Begins Here!"
-              description="You haven't added any trips yet. It's time to start planning."
+              description="No trips found matching your search."
               action={{ label: "Create New Trip", onClick: openCreateDialog }}
             />
           ) : null}
