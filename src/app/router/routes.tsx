@@ -1,11 +1,8 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { LoginPage, RecoverPasswordPage, SignUpPage } from '@/features/auth'
-import {
-  ItineraryPage,
-  PlaceholderPage,
-  TripDashboardPage,
-} from '@/features/itineraries'
+import { BudgetPage } from '@/features/budgets'
+import { ItineraryPage, TripDashboardPage } from '@/features/itineraries'
 import { PackingChecklistsPage } from '@/features/packing-checklists'
 import { TripMembersPage } from '@/features/trip-members'
 import { TripsPage } from '@/features/trips'
@@ -66,13 +63,7 @@ const TripPackingRoute = () => {
 const TripBudgetRoute = () => {
   return (
     <TripRouteRenderer>
-      {(tripId) => (
-        <PlaceholderPage
-          tripId={tripId}
-          title="Budget"
-          description="Budget management will be available in this workspace."
-        />
-      )}
+      {(tripId) => <BudgetPage tripId={tripId} />}
     </TripRouteRenderer>
   )
 }

@@ -1,3 +1,4 @@
+import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -11,6 +12,7 @@ export type ConfirmActionDialogProps = {
   description: string
   confirmLabel: string
   confirmColor?: 'primary' | 'error'
+  errorMessage?: string | null
   isPending?: boolean
   onCancel: () => void
   onConfirm: () => void
@@ -22,14 +24,25 @@ export const ConfirmActionDialog = ({
   description,
   confirmLabel,
   confirmColor = 'primary',
+  errorMessage,
   isPending = false,
   onCancel,
   onConfirm,
 }: ConfirmActionDialogProps) => (
-  <Dialog open={open} onClose={onCancel} fullWidth maxWidth="xs">
+  <Dialog
+    open={open}
+    onClose={isPending ? undefined : onCancel}
+    fullWidth
+    maxWidth="xs"
+  >
     <DialogTitle>{title}</DialogTitle>
     <DialogContent>
       <Typography color="text.secondary">{description}</Typography>
+      {errorMessage ? (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {errorMessage}
+        </Alert>
+      ) : null}
     </DialogContent>
     <DialogActions sx={{ px: 3, pb: 2 }}>
       <Button variant="outlined" onClick={onCancel} disabled={isPending}>

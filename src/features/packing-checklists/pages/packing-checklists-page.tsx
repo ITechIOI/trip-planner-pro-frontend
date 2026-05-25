@@ -13,6 +13,7 @@ import { AppLayout } from "@/shared/components/app-layout";
 import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
+import { useDebouncedValue } from "@/shared/lib";
 import { useTripAccess } from "@/features/trips/api/use-trip-access";
 import { useTripDashboard } from "@/features/trips/api/use-trip-action";
 import {
@@ -92,7 +93,8 @@ const PackingChecklistsContent = ({ tripId }: PackingChecklistsPageProps) => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const normalizedSearch = searchTerm.trim();
+  const debouncedSearchTerm = useDebouncedValue(searchTerm);
+  const normalizedSearch = debouncedSearchTerm.trim();
   const queryParams = useMemo<QueryTripPackingChecklistsParams>(
     () => ({
       offset,

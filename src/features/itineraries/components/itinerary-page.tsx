@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { keepPreviousData } from "@tanstack/react-query";
 import Alert from "@mui/material/Alert";
@@ -38,6 +38,7 @@ import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
 import { ProgressRing } from "@/shared/components/progress-ring";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
+import { useDebouncedValue } from "@/shared/lib";
 import { useTripDashboard } from "@/features/trips/api/use-trip-action";
 import { useTripAccess } from "@/features/trips/api/use-trip-access";
 import { getTripsErrorMessage } from "@/features/trips/lib/trips-error";
@@ -219,8 +220,8 @@ const ItineraryContent = ({
     "",
   );
   const [filterDate, setFilterDate] = useState("");
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const normalizedSearchQuery = deferredSearchQuery.trim();
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
+  const normalizedSearchQuery = debouncedSearchQuery.trim();
 
   const pageViewMode: PageViewMode =
     searchParams.get("view") === "calendar" ? "calendar" : "list";
@@ -667,7 +668,7 @@ const ItineraryContent = ({
           >
             <TextField
               size="small"
-              placeholder="Search activities..."
+              placeholder="Search activities by name"
               value={searchQuery}
               onChange={(event) => handleSearchQueryChange(event.target.value)}
               sx={{

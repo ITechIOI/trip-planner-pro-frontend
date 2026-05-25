@@ -40,7 +40,7 @@ export const PackingFilters = ({
     >
       <TextField
         label="Search"
-        placeholder="Search items..."
+        placeholder="Search items by name"
         size="small"
         value={searchTerm}
         onChange={(event) => onSearchChange(event.target.value)}

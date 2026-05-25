@@ -22,6 +22,7 @@ import { buildTripDashboardPath, buildTripMembersPath } from "@/app/router";
 import { ConfirmActionDialog } from "@/shared/components/confirm-action-dialog";
 import { EmptyState } from "@/shared/components/empty-state";
 import { TablePaginationToolbar } from "@/shared/components/table-pagination-toolbar";
+import { useDebouncedValue } from "@/shared/lib";
 import {
   useCreateTripAction,
   useDeleteTripAction,
@@ -89,19 +90,20 @@ export const TripsPage = () => {
   const status = getStatusFilter(searchParams.get("status"));
   const startDate = searchParams.get("startDate") ?? "";
   const endDate = searchParams.get("endDate") ?? "";
+  const debouncedSearch = useDebouncedValue(search);
 
   const queryParams = useMemo<QueryTripsParams>(
     () => ({
       offset,
       limit: DEFAULT_TRIP_PAGE_LIMIT,
-      ...(search.trim() ? { search: search.trim() } : {}),
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
       ...(status ? { status } : {}),
       ...(startDate
         ? { startDate: normalizeTripDate(startDate) ?? undefined }
         : {}),
       ...(endDate ? { endDate: toEndDateTime(endDate) } : {}),
     }),
-    [endDate, offset, search, startDate, status],
+    [debouncedSearch, endDate, offset, startDate, status],
   );
   const tripsQuery = useQueryTrips(queryParams);
   const createTrip = useCreateTripAction();
@@ -328,7 +330,7 @@ export const TripsPage = () => {
             >
               <TextField
                 label="Search"
-                placeholder="Search trips by name..."
+                placeholder="Search trips by name"
                 size="small"
                 value={search}
                 onChange={(event) => updateFilter("search", event.target.value)}
