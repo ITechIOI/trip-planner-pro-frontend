@@ -170,6 +170,21 @@ export const AppHeader = () => {
     navigate(routePaths.login, { replace: true })
   }
 
+  const viewProfile = () => {
+    setAccountAnchor(null)
+
+    navigate(routePaths.profile, {
+      state: selectedTripId
+        ? {
+            returnLabel: selectedTrip?.name
+              ? `${selectedTrip.name} dashboard`
+              : 'trip dashboard',
+            returnTo: buildTripDashboardPath(selectedTripId),
+          }
+        : undefined,
+    })
+  }
+
   return (
     <Box
       component="header"
@@ -332,9 +347,7 @@ export const AppHeader = () => {
                 ) : null}
               </Box>
             </MenuItem>
-            <MenuItem onClick={() => navigate(routePaths.profile)}>
-              View Profile
-            </MenuItem>
+            <MenuItem onClick={viewProfile}>View Profile</MenuItem>
             <MenuItem onClick={signOut}>Sign out</MenuItem>
           </Menu>
         </Box>

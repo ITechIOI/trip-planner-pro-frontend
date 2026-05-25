@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -6,6 +7,8 @@ import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { buildTripsPath } from '@/app/router'
 import { useTrips } from '@/features/trips/api/use-trip-action'
 import { ProfileForm } from '@/features/users/components/profile-form'
 import {
@@ -32,6 +35,14 @@ type Feedback = {
   severity: 'success' | 'error'
   message: string
 }
+
+type ProfileLocationState = {
+  returnLabel?: string
+  returnTo?: string
+}
+
+const isSafeInternalPath = (path?: string) =>
+  Boolean(path?.startsWith('/') && !path.startsWith('//'))
 
 const toNullableTrimmedString = (value: string) => {
   const trimmedValue = value.trim()
@@ -67,6 +78,8 @@ const ProfilePageSkeleton = () => (
 )
 
 export const ProfilePage = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const currentUserQuery = useCurrentUser()
   const tripsQuery = useTrips({ offset: 0, limit: 1 })
@@ -76,6 +89,11 @@ export const ProfilePage = () => {
   const tripsPage = tripsQuery.data as TripPageResponse | undefined
   const tripCount = tripsPage?.total ?? 0
   const isSaving = updateProfile.isPending || uploadAvatar.isPending
+  const profileLocationState = location.state as ProfileLocationState | null
+  const returnTo = isSafeInternalPath(profileLocationState?.returnTo)
+    ? profileLocationState?.returnTo
+    : null
+  const returnLabel = profileLocationState?.returnLabel ?? 'trip dashboard'
   const profileFormKey = currentUser
     ? [
         currentUser.id ?? 'profile',
@@ -130,6 +148,10 @@ export const ProfilePage = () => {
     })
   }
 
+  const handleReturnNavigation = () => {
+    navigate(returnTo ?? buildTripsPath())
+  }
+
   return (
     <Box
       component="main"
@@ -143,24 +165,42 @@ export const ProfilePage = () => {
     >
       <Box sx={{ maxWidth: 1180, mx: 'auto' }}>
         <Stack spacing={5}>
-          <Stack spacing={1}>
-            <Typography
-              component="h1"
-              sx={{
-                color: '#0f172a',
-                fontSize: { xs: 36, md: 44 },
-                fontWeight: 900,
-                lineHeight: 1.08,
-              }}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+            }}
+          >
+            <Stack spacing={1}>
+              <Typography
+                component="h1"
+                sx={{
+                  color: '#0f172a',
+                  fontSize: { xs: 36, md: 44 },
+                  fontWeight: 900,
+                  lineHeight: 1.08,
+                }}
+              >
+                Account Settings
+              </Typography>
+              <Typography
+                color="text.secondary"
+                sx={{ fontSize: { xs: 16, md: 18 } }}
+              >
+                Manage your personal information and account preferences
+              </Typography>
+            </Stack>
+
+            <Button
+              onClick={handleReturnNavigation}
+              startIcon={<ArrowBackIcon />}
+              sx={{ flexShrink: 0 }}
+              variant="outlined"
             >
-              Account Settings
-            </Typography>
-            <Typography
-              color="text.secondary"
-              sx={{ fontSize: { xs: 16, md: 18 } }}
-            >
-              Manage your personal information and account preferences
-            </Typography>
+              {returnTo ? `Back to ${returnLabel}` : 'Back to trips'}
+            </Button>
           </Stack>
 
           {currentUserQuery.isLoading ? (

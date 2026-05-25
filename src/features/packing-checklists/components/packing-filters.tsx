@@ -1,24 +1,23 @@
 import SearchIcon from '@mui/icons-material/Search'
+import FormControl from '@mui/material/FormControl'
+import InputAdornment from '@mui/material/InputAdornment'
+import InputLabel from '@mui/material/InputLabel'
+import MenuItem from '@mui/material/MenuItem'
+import Select from '@mui/material/Select'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import { PackedStatus } from '@/shared'
+import { PACKING_CATEGORY_OPTIONS } from '../lib/packing-category-meta'
+import type { PackedStatus as PackedStatusValue } from '../types/packing-item'
+import type { PackingCategory } from '../types/packing-item'
 
 type PackingFiltersProps = {
   searchTerm: string
-  categoryFilter: string
-  packedFilter: string
+  categoryFilter: PackingCategory | ''
+  packedFilter: PackedStatusValue | ''
   onSearchChange: (value: string) => void
-  onCategoryChange: (value: string) => void
-  onPackedChange: (value: string) => void
-}
-
-const selectStyle = {
-  height: '34px',
-  minWidth: '126px',
-  borderRadius: '10px',
-  border: '1px solid #D6DEE8',
-  background: '#F8FAFC',
-  color: '#1E293B',
-  padding: '0 12px',
-  fontSize: '13px',
-  outline: 'none',
+  onCategoryChange: (value: PackingCategory | '') => void
+  onPackedChange: (value: PackedStatusValue | '') => void
 }
 
 export const PackingFilters = ({
@@ -30,69 +29,78 @@ export const PackingFilters = ({
   onPackedChange,
 }: PackingFiltersProps) => {
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(220px, 400px) 126px 126px',
-        gap: '12px',
-        alignItems: 'center',
-        marginTop: '12px',
-        maxWidth: '804px',
+    <Stack
+      direction={{ xs: 'column', lg: 'row' }}
+      spacing={2}
+      sx={{
+        alignItems: { lg: 'center' },
+        justifyContent: { lg: 'space-between' },
+        width: '100%',
       }}
     >
-      <label
-        style={{
-          height: '34px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          borderRadius: '10px',
-          border: '1px solid #D6DEE8',
-          background: '#F8FAFC',
-          color: '#64748B',
-          padding: '0 12px',
-          fontSize: '13px',
+      <TextField
+        label="Search"
+        placeholder="Search items..."
+        size="small"
+        value={searchTerm}
+        onChange={(event) => onSearchChange(event.target.value)}
+        sx={{
+          width: { xs: '100%', lg: 420 },
+          flexShrink: 0,
+        }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        sx={{
+          flex: { lg: 1 },
+          justifyContent: { lg: 'flex-end' },
+          width: { xs: '100%', lg: 'auto' },
         }}
       >
-        <SearchIcon sx={{ color: '#64748B', fontSize: 18 }} />
-        <input
-          placeholder="Search items..."
-          value={searchTerm}
-          onChange={(event) => onSearchChange(event.target.value)}
-          style={{
-            border: 0,
-            outline: 0,
-            background: 'transparent',
-            color: '#0F172A',
-            width: '100%',
-            fontSize: '13px',
-          }}
-        />
-      </label>
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Category</InputLabel>
+          <Select
+            label="Category"
+            value={categoryFilter}
+            onChange={(event) =>
+              onCategoryChange(event.target.value as PackingCategory | '')
+            }
+          >
+            <MenuItem value="">All Categories</MenuItem>
+            {PACKING_CATEGORY_OPTIONS.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      <select
-        value={categoryFilter}
-        onChange={(event) => onCategoryChange(event.target.value)}
-        style={selectStyle}
-      >
-        <option value="ALL">All Categories</option>
-        <option value="CLOTHES">Clothes</option>
-        <option value="DOCUMENTS">Documents</option>
-        <option value="ELECTRONICS">Electronics</option>
-        <option value="MEDICINE">Medicine</option>
-        <option value="PERSONAL">Personal</option>
-        <option value="OTHER">Other</option>
-      </select>
-
-      <select
-        value={packedFilter}
-        onChange={(event) => onPackedChange(event.target.value)}
-        style={selectStyle}
-      >
-        <option value="ALL">All Items</option>
-        <option value="PACKED">Packed</option>
-        <option value="NOT_PACKED">Not Packed</option>
-      </select>
-    </div>
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel>Status</InputLabel>
+          <Select
+            label="Status"
+            value={packedFilter}
+            onChange={(event) =>
+              onPackedChange(event.target.value as PackedStatusValue | '')
+            }
+          >
+            <MenuItem value="">All Items</MenuItem>
+            <MenuItem value={PackedStatus.PACKED}>Packed</MenuItem>
+            <MenuItem value={PackedStatus.NOT_PACKED}>Not Packed</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
+    </Stack>
   )
 }

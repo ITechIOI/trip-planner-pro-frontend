@@ -1,283 +1,248 @@
-import CloseIcon from '@mui/icons-material/Close'
+import { useState, type FormEvent } from "react";
+import CloseIcon from "@mui/icons-material/Close";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControl from "@mui/material/FormControl";
+import IconButton from "@mui/material/IconButton";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { PackedStatus, RequiredStatus } from "@/shared";
+import { PACKING_CATEGORY_OPTIONS } from "../lib/packing-category-meta";
 import type {
   PackingCategory,
   PackingItem,
-  RequiredStatus,
-} from '../types/packing-item'
+  PackingItemFormValues,
+  PackedStatus as PackedStatusValue,
+  RequiredStatus as RequiredStatusValue,
+} from "../types/packing-item";
 
 type PackingItemModalProps = {
-  isOpen: boolean
-  mode: 'add' | 'edit'
-  editingItem?: PackingItem | null
-  isSubmitting?: boolean
-  onClose: () => void
-  onSubmit: (values: {
-    name: string
-    category: PackingCategory
-    quantity: number
-    requiredStatus: RequiredStatus
-  }) => void
-}
+  isOpen: boolean;
+  mode: "add" | "edit";
+  editingItem?: PackingItem | null;
+  isSubmitting?: boolean;
+  submitError?: string | null;
+  onClose: () => void;
+  onSubmit: (values: PackingItemFormValues) => void;
+};
+
+const getInitialCategory = (item?: PackingItem | null): PackingCategory =>
+  item?.category ?? "OTHER";
 
 export const PackingItemModal = ({
   isOpen,
   mode,
   editingItem,
+  ...props
+}: PackingItemModalProps) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <PackingItemModalContent
+      key={`${mode}-${editingItem?.id ?? "new"}`}
+      isOpen={isOpen}
+      mode={mode}
+      editingItem={editingItem}
+      {...props}
+    />
+  );
+};
+
+const PackingItemModalContent = ({
+  isOpen,
+  mode,
+  editingItem,
   isSubmitting = false,
+  submitError,
   onClose,
   onSubmit,
 }: PackingItemModalProps) => {
-  if (!isOpen) return null
+  const [name, setName] = useState(
+    mode === "edit" ? (editingItem?.name ?? "") : "",
+  );
+  const [category, setCategory] = useState<PackingCategory>(
+    mode === "edit" ? getInitialCategory(editingItem) : "OTHER",
+  );
+  const [quantity, setQuantity] = useState(
+    String(mode === "edit" ? (editingItem?.quantity ?? 1) : 1),
+  );
+  const [requiredStatus, setRequiredStatus] = useState<RequiredStatusValue>(
+    mode === "edit"
+      ? (editingItem?.requiredStatus ?? RequiredStatus.OPTIONAL)
+      : RequiredStatus.OPTIONAL,
+  );
+  const [packedStatus, setPackedStatus] = useState<PackedStatusValue>(
+    mode === "edit"
+      ? (editingItem?.packedStatus ?? PackedStatus.NOT_PACKED)
+      : PackedStatus.NOT_PACKED,
+  );
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const title = mode === 'add' ? 'Add Packing Item' : 'Edit Packing Item'
-  const submitLabel = mode === 'add' ? 'Add Item' : 'Save Changes'
-  const defaultName = mode === 'edit' ? editingItem?.name ?? '' : ''
-  const defaultCategory =
-    mode === 'edit' ? editingItem?.category ?? 'OTHER' : 'OTHER'
-  const defaultQuantity = mode === 'edit' ? editingItem?.quantity ?? 1 : 1
-  const defaultRequiredStatus =
-    mode === 'edit' ? editingItem?.requiredStatus ?? 'OPTIONAL' : 'OPTIONAL'
+  const title = mode === "add" ? "Add Packing Item" : "Edit Packing Item";
+  const submitLabel = mode === "add" ? "Add Item" : "Save Changes";
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+
+    const normalizedName = name.trim();
+    const quantityNumber = Number(quantity);
+
+    if (!normalizedName) {
+      setFormError("Item name is required.");
+      return;
+    }
+
+    if (!Number.isFinite(quantityNumber) || quantityNumber < 1) {
+      setFormError("Quantity must be at least 1.");
+      return;
+    }
+
+    setFormError(null);
+    onSubmit({
+      name: normalizedName,
+      category,
+      quantity: quantityNumber,
+      requiredStatus,
+      packedStatus,
+    });
+  };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(15, 23, 42, 0.55)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-      }}
-    >
-      <form
-        key={`${mode}-${editingItem?.id ?? 'new'}`}
-        onSubmit={(event) => {
-          event.preventDefault()
-
-          const formData = new FormData(event.currentTarget)
-          const name = String(formData.get('name') ?? '').trim()
-
-          if (!name) return
-
-          onSubmit({
-            name,
-            category: String(formData.get('category')) as PackingCategory,
-            quantity: Number(formData.get('quantity')) || 1,
-            requiredStatus: String(
-              formData.get('requiredStatus'),
-            ) as RequiredStatus,
-          })
-        }}
-        style={{
-          width: '420px',
-          background: '#FFFFFF',
-          borderRadius: '18px',
-          padding: '24px',
-          boxShadow: '0 20px 60px rgba(15,23,42,0.25)',
+    <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle
+        sx={{
+          alignItems: "flex-start",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 2,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'start',
-            marginBottom: '18px',
-          }}
+        <Stack spacing={0.5}>
+          <Typography component="span" variant="h6" sx={{ fontWeight: 800 }}>
+            {title}
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            Add or update an item to your packing list.
+          </Typography>
+        </Stack>
+        <IconButton aria-label="Close" onClick={onClose} size="small">
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent>
+        <Stack
+          component="form"
+          id="packing-item-form"
+          spacing={2}
+          onSubmit={handleSubmit}
         >
-          <div>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: '20px',
-                fontWeight: 700,
-              }}
-            >
-              {title}
-            </h2>
-            <p
-              style={{
-                margin: '6px 0 0',
-                color: '#6B7280',
-                fontSize: '13px',
-              }}
-            >
-              Add or update an item to your packing list.
-            </p>
-          </div>
+          {formError ? <Alert severity="error">{formError}</Alert> : null}
+          {submitError ? <Alert severity="error">{submitError}</Alert> : null}
 
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '10px',
-              border: '1px solid #E5E7EB',
-              background: '#FFFFFF',
-              cursor: 'pointer',
-              color: '#6B7280',
-              display: 'grid',
-              placeItems: 'center',
-            }}
-            title="Close"
-          >
-            <CloseIcon sx={{ fontSize: 18 }} />
-          </button>
-        </div>
-
-        <div style={{ marginBottom: '14px' }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 600,
-              marginBottom: '6px',
-            }}
-          >
-            Item Name *
-          </label>
-          <input
-            name="name"
+          <TextField
+            autoFocus
+            label="Item Name"
             placeholder="e.g., Passport, T-Shirts, Sunscreen"
-            defaultValue={defaultName}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: '1px solid #E5E7EB',
-            }}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            disabled={isSubmitting}
+            required
+            fullWidth
           />
-        </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-            marginBottom: '14px',
-          }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-              }}
-            >
-              Category
-            </label>
-            <select
-              name="category"
-              defaultValue={defaultCategory}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: '1px solid #E5E7EB',
-              }}
-            >
-              <option value="CLOTHES">Clothes</option>
-              <option value="DOCUMENTS">Documents</option>
-              <option value="ELECTRONICS">Electronics</option>
-              <option value="MEDICINE">Medicine</option>
-              <option value="PERSONAL">Personal</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select
+                label="Category"
+                value={category}
+                disabled={isSubmitting}
+                onChange={(event) =>
+                  setCategory(event.target.value as PackingCategory)
+                }
+              >
+                {PACKING_CATEGORY_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-              }}
-            >
-              Quantity *
-            </label>
-            <input
-              name="quantity"
+            <TextField
+              label="Quantity"
               type="number"
-              min={1}
-              defaultValue={defaultQuantity}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                border: '1px solid #E5E7EB',
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              disabled={isSubmitting}
+              required
+              fullWidth
+              slotProps={{
+                htmlInput: {
+                  min: 1,
+                },
               }}
             />
-          </div>
-        </div>
+          </Stack>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 600,
-              marginBottom: '6px',
-            }}
-          >
-            Importance
-          </label>
-          <select
-            name="requiredStatus"
-            defaultValue={defaultRequiredStatus}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '10px',
-              border: '1px solid #E5E7EB',
-            }}
-          >
-            <option value="REQUIRED">Required - Must bring</option>
-            <option value="OPTIONAL">Optional</option>
-          </select>
-        </div>
+          <FormControl fullWidth>
+            <InputLabel>Importance</InputLabel>
+            <Select
+              label="Importance"
+              value={requiredStatus}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setRequiredStatus(event.target.value as RequiredStatusValue)
+              }
+            >
+              <MenuItem value={RequiredStatus.REQUIRED}>
+                Required - Must bring
+              </MenuItem>
+              <MenuItem value={RequiredStatus.OPTIONAL}>Optional</MenuItem>
+            </Select>
+          </FormControl>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '10px',
-          }}
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              label="Status"
+              value={packedStatus}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setPackedStatus(event.target.value as PackedStatusValue)
+              }
+            >
+              <MenuItem value={PackedStatus.NOT_PACKED}>Not Packed</MenuItem>
+              <MenuItem value={PackedStatus.PACKED}>Packed</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="packing-item-form"
+          variant="contained"
+          disabled={isSubmitting}
         >
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: '1px solid #E5E7EB',
-              background: '#FFFFFF',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: 'none',
-              background: '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 600,
-              cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </button>
-        </div>
-      </form>
-    </div>
-  )
-}
+          {isSubmitting ? "Saving..." : submitLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
